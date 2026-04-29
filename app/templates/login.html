@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Habit Tracker - Login</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            /* animated gradient background */
+            background: linear-gradient(-45deg, #4facfe, #00f2fe, #43e97b, #38f9d7);
+            background-size: 400% 400%;
+            animation: gradientBG 10s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .box {
+            width: 360px;
+            padding: 30px;
+            border-radius: 16px;
+
+            /* glass effect */
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            text-align: center;
+            color: #fff;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        h2 {
+            margin-top: 15px;
+        }
+
+        input {
+            width: 90%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        button {
+            width: 95%;
+            padding: 12px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #ffffff;
+            color: #333;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #f1f1f1;
+        }
+
+        a {
+            display: block;
+            margin-top: 12px;
+            color: #fff;
+            text-decoration: underline;
+            font-size: 13px;
+        }
+
+        .msg {
+            color: yellow;
+            font-size: 13px;
+        }
+
+        /* responsive */
+        @media (max-width: 400px) {
+            .box {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <!-- 🔷 Title -->
+    <h1>📅 Habit Tracker</h1>
+
+    <!-- 📝 Description -->
+    <p>
+        Build better habits, stay consistent, and track your daily progress with ease.
+    </p>
+
+    <h2>🔐 Login</h2>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages() %}
+      {% for msg in messages %}
+        <p class="msg">{{ msg }}</p>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Login form -->
+    <form method="POST" action="/">
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+    </form>
+
+    <a href="/signup">Don't have an account? Sign up</a>
+
+</div>
+
+</body>
+</html>

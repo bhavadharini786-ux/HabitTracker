@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+
+<style>
+h2, h3 {
+    text-align: center;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.card {
+    background: white;
+    padding: 18px;
+    border-radius: 12px;
+    min-width: 160px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.chart-box {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px auto;
+    width: 90%;
+    max-width: 700px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* 🔥 HEATMAP GRID */
+.heatmap-container {
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+}
+
+#heatmap {
+    display: grid;
+    grid-template-columns: repeat(30, 15px);
+    gap: 4px;
+    padding: 10px;
+    background: white;
+    border-radius: 10px;
+}
+
+.day {
+    width: 15px;
+    height: 15px;
+    border-radius: 3px;
+}
+</style>
+
+<h2>📊 Habit Analytics</h2>
+
+<div id="error"></div>
+
+<!-- 📊 STATS -->
+<div class="stats">
+    <div class="card">📈 Completion Rate<br><strong id="rate">--</strong></div>
+    <div class="card">🔥 Best Streak<br><strong id="best">--</strong></div>
+    <div class="card">🏆 Top Habit<br><strong id="top">--</strong></div>
+    <div class="card">❌ Missed Days<br><strong id="missed">--</strong></div>
+</div>
+
+<!-- 📈 LINE -->
+<div class="chart-box">
+    <h3>📈 Weekly Trend</h3>
+    <canvas id="trendChart"></canvas>
+</div>
+
+<!-- 🥧 PIE -->
+<div class="chart-box">
+    <h3>🥧 Completion Overview</h3>
+    <canvas id="pieChart"></canvas>
+</div>
+
+<!-- 🔥 HEATMAP -->
+<h3>🔥 Consistency Heatmap</h3>
+<div class="heatmap-container">
+    <div id="heatmap"></div>
+</div>
+
+<!-- 💡 SUGGESTIONS -->
+<h3>💡 Suggestions</h3>
+<ul id="suggestions" style="text-align:center;"></ul>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+async function loadAnalytics() {
+    try {
+        const res = await fetch("/api/analytics");
+        if (!res.ok) throw new Error();
+
+        const data = await res.json();
+
+        document.getElementById("rate").innerText = data.completion_rate + "%";
+        document.getElementById("best").innerText = data.best_streak;
+        document.getElementById("top").innerText = data.top_habit || "N/A";
+        document.getElementById("missed").innerText = data.missed_days;
+
+        // 📈 LINE CHART
+        new Chart(document.getElementById("trendChart"), {
+            type: "line",
+            data: {
+                labels: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+                datasets: [{
+                    label: "Daily Completion",
+                    data: data.weekly_trend,
+                    borderWidth: 2
+                }]
+            }
+        });
+
+        // 🥧 PIE CHART (FIXED)
+        const totalCompleted = data.weekly_trend.reduce((a,b)=>a+b,0);
+        const totalPossible = 7 * data.weekly_trend.length;
+
+        new Chart(document.getElementById("pieChart"), {
+            type: "pie",
+            data: {
+                labels: ["Completed","Missed"],
+                datasets: [{
+                    data: [
+                        totalCompleted,
+                        totalPossible - totalCompleted
+                    ]
+                }]
+            }
+        });
+
+    } catch {
+        document.getElementById("error").innerText = "❌ Failed to load analytics";
+    }
+}
+
+async function loadHeatmap() {
+    const res = await fetch("/api/heatmap");
+    const data = await res.json();
+
+    const container = document.getElementById("heatmap");
+    container.innerHTML = "";
+
+    const today = new Date();
+
+    // Last 30 days
+    for (let i = 29; i >= 0; i--) {
+        let d = new Date();
+        d.setDate(today.getDate() - i);
+
+        let dateStr = d.toISOString().split("T")[0];
+
+        let count = data[dateStr] || 0;
+
+        let box = document.createElement("div");
+        box.classList.add("day");
+
+        // 🎨 GitHub color scale
+        if (count === 0) box.style.background = "#ebedf0";
+        else if (count === 1) box.style.background = "#9be9a8";
+        else if (count === 2) box.style.background = "#40c463";
+        else if (count === 3) box.style.background = "#30a14e";
+        else box.style.background = "#216e39";
+
+        box.title = `${dateStr} : ${count} habits`;
+
+        container.appendChild(box);
+    }
+}
+
+
+async function loadSuggestions() {
+    try {
+        const res = await fetch("/api/suggestions");
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const list = document.getElementById("suggestions");
+
+        data.forEach(item => {
+            const li = document.createElement("li");
+            li.innerText = item;
+            list.appendChild(li);
+        });
+
+    } catch {
+        console.log("Suggestions not available");
+    }
+}
+
+loadAnalytics();
+loadHeatmap();
+loadSuggestions();
+</script>
+
+{% endblock %}

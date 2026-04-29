@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Habit Tracker</title>
+</head>
+<body>
+<!-- templates/base.html -->
+
+<nav>
+    <a href="{{ url_for('habit.dashboard') }}">Dashboard</a> |
+    <a href="{{ url_for('habit.habits') }}">Habits</a> |
+    <a href="{{ url_for('habit.weekly_page') }}">Weekly</a> |
+    <a href="{{ url_for('habit.analytics_page') }}">Analytics</a>
+    <a href="{{ url_for('auth.logout') }}">Logout</a>
+</nav>
+
+    <hr>
+
+    <!-- Page Content -->
+    {% block content %}{% endblock %}
+
+</body>
+</html>

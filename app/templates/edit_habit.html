@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Edit Habit</h2>
+
+<form method="POST">
+    <input name="name" value="{{ habit.name }}">
+    <button type="submit">Update</button>
+</form>
+
+<br>
+
+<a href="{{ url_for('habit.habits') }}">Back</a>
+
+{% endblock %}
