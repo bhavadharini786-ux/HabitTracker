@@ -1,14 +1,14 @@
 from flask import Blueprint, render_template, request, redirect, session, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.utils.db import mongo
-from functools import wraps
-from flask import session, redirect, url_for
+
 auth_bp = Blueprint("auth", __name__)
+
 
 # ==========================
 # 🔐 LOGIN
 # ==========================
-@auth_bp.route("/", methods=["GET", "POST"])
+@auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         email = request.form["email"]
@@ -17,7 +17,12 @@ def login():
         user = mongo.db.users.find_one({"email": email})
 
         if user and check_password_hash(user["password"], password):
-            session["user"] = email
+            session.clear()
+            session["user"] = {
+                "email": email,
+                "id": str(user["_id"])
+            }
+
             return redirect(url_for("habit.dashboard"))
 
         flash("Invalid email or password")
@@ -28,7 +33,8 @@ def login():
 
 # ==========================
 # 🆕 SIGNUP
-# ==========================@auth_bp.route("/signup", methods=["GET", "POST"])
+# ==========================
+@auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
         email = request.form["email"]
@@ -63,6 +69,7 @@ def signup():
 
     return render_template("signup.html")
 
+
 # ==========================
 # 🚪 LOGOUT
 # ==========================
@@ -70,6 +77,5 @@ def signup():
 def logout():
     session.clear()
     return redirect(url_for("auth.login"))
-
 
 

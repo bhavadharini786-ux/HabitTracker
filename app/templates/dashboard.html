@@ -1,242 +1,155 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Habit Dashboard</title>
 
     <style>
         body {
+            margin: 0;
             font-family: Arial;
-            background: #f4f6f8;
+            background: #0d1117;
+            color: #e6edf3;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
             padding: 20px;
         }
 
-        nav {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        nav a {
-            text-decoration: none;
-            font-weight: bold;
-            color: #333;
-        }
-
-        h2 {
+        h1 {
             text-align: center;
         }
 
-        form {
-            text-align: center;
+        /* ================= CREATE FORM ================= */
+        .form-box {
+            background: #161b22;
+            padding: 20px;
+            border-radius: 10px;
             margin-bottom: 20px;
+            border: 1px solid #30363d;
         }
 
-        input, button {
+        input {
             padding: 10px;
             margin: 5px;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+            background: #0d1117;
+            color: white;
         }
 
-        .stats {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
+        button {
+            padding: 10px 15px;
+            background: #238636;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
         }
 
-        .card {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            min-width: 140px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        button:hover {
+            background: #2ea043;
         }
 
-        .progress-bar {
-            height: 6px;
-            background: #eee;
-            border-radius: 5px;
-            margin-top: 8px;
-        }
-
-        .progress {
-            height: 6px;
-            background: #4caf50;
-            border-radius: 5px;
-        }
-
-        .table-container {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            overflow-x: auto;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        }
-
+        /* ================= TABLE ================= */
         table {
             width: 100%;
             border-collapse: collapse;
-            min-width: 700px;
+            background: #161b22;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #30363d;
+            text-align: center;
         }
 
         th {
-            background: #2c3e50;
-            color: white;
-            padding: 10px;
+            background: #21262d;
         }
 
-        td {
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
-        }
-
-        tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-
-        .done {
-            background: #d4f8d4;
-        }
-
-        .btn {
-            padding: 5px 10px;
-            border: none;
+        /* checkbox style */
+        input[type="checkbox"] {
+            transform: scale(1.3);
             cursor: pointer;
-            border-radius: 5px;
         }
 
-        .edit { background: orange; color: white; }
-        .delete { background: red; color: white; }
-
-        @media (max-width: 768px) {
-            .stats {
-                flex-direction: column;
-                align-items: center;
-            }
+        .status-done {
+            color: #2ea043;
+            font-weight: bold;
         }
+
+        .status-pending {
+            color: #f85149;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 
 <body>
 
-<!-- NAV -->
-<nav>
-    <a href="{{ url_for('habit.dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('habit.habits') }}">Habits</a>
-    <a href="{{ url_for('habit.weekly_page') }}">Weekly</a>
-    <a href="{{ url_for('habit.analytics_page') }}">Analytics</a>
-    <a href="{{ url_for('auth.logout') }}">🚪 Logout</a>
-</nav>
+<div class="container">
 
-<h2>📅 Habit Dashboard</h2>
+    <h1>📅 Habit Dashboard</h1>
 
-<!-- STATS -->
-<div class="stats">
+    <!-- ================= CREATE HABIT ================= -->
+    <div class="form-box">
 
-    <div class="card">
-        📅 Today Done<br>
-        <strong id="todayCount">{{ today_count }}</strong>
+        <h3>Create Habit</h3>
+
+        <form method="POST" action="/habit/create">
+
+            <input type="text" name="name" placeholder="Habit Name" required>
+            <input type="text" name="time" placeholder="Time (e.g. 6:00 AM)" required>
+
+            <button type="submit">+ Add Habit</button>
+
+        </form>
     </div>
 
-    <div class="card">
-        🔥 Streak<br>
-        <strong id="streakCount">{{ streak }}</strong>
-    </div>
+    <!-- ================= TABLE ================= -->
+    <table>
 
-    <div class="card">
-        🏆 Score<br>
-        <strong id="scoreCount">{{ score }}</strong>
+        <tr>
+            <th>Habit Name</th>
+            <th>Date</th>
+            <th>Status</th>
+        </tr>
 
-        <div class="progress-bar">
-            <div class="progress" style="width: {{ completion_percent }}%;"></div>
-        </div>
-    </div>
+        {% for habit in habits %}
+
+        <tr>
+            <td>{{ habit.name }}</td>
+
+            <td>{{ today }}</td>
+
+            <td>
+
+                <form method="POST" action="/habit/toggle/{{ habit._id }}">
+
+                    {% if habit._id|string in completed_ids %}
+                        <input type="checkbox" checked onchange="this.form.submit()">
+                        <span class="status-done">Done</span>
+                    {% else %}
+                        <input type="checkbox" onchange="this.form.submit()">
+                        <span class="status-pending">Not Done</span>
+                    {% endif %}
+
+                </form>
+
+            </td>
+        </tr>
+
+        {% endfor %}
+
+    </table>
 
 </div>
-
-<!-- CREATE HABIT -->
-<form action="{{ url_for('habit.create_habit') }}" method="POST">
-    <input type="text" name="name" placeholder="Habit Name" required>
-    <input type="time" name="time" required>
-    <button type="submit">➕ Add Habit</button>
-</form>
-
-<!-- TABLE -->
-<div class="table-container">
-
-<table>
-    <tr>
-        <th>Habit</th>
-        <th>Time</th>
-        <th>Created</th>
-        <th>Status</th>
-        <th>Edit</th>
-        <th>Delete</th>
-    </tr>
-
-    {% for habit in habits %}
-    <tr class="{% if habit._id|string in completed_ids %}done{% endif %}">
-
-        <td>{{ habit.name }}</td>
-        <td>{{ habit.time }}</td>
-        <td>{{ habit.created_at }}</td>
-
-        <!-- ✅ FIXED CHECKBOX -->
-        <td>
-            <input type="checkbox"
-                   onclick="toggleHabit('{{ habit._id }}')"
-                   {% if habit._id|string in completed_ids %}checked{% endif %}>
-        </td>
-
-        <td>
-            <a href="{{ url_for('habit.edit_habit', id=habit._id) }}">
-                <button type="button" class="btn edit">Edit</button>
-            </a>
-        </td>
-
-        <td>
-            <button class="btn delete"
-                onclick="confirmDelete('{{ url_for('habit.delete_habit', id=habit._id) }}')">
-                Delete
-            </button>
-        </td>
-
-    </tr>
-    {% endfor %}
-</table>
-
-</div>
-
-<!-- JS -->
-<script>
-function confirmDelete(url) {
-    if (confirm("⚠ Are you sure you want to delete this habit?")) {
-        window.location.href = url;
-    }
-}
-
-function toggleHabit(id) {
-    window.location.href = "/toggle/" + id;
-}
-
-// OPTIONAL: Live stats update
-async function loadDashboardStats() {
-    try {
-        const res = await fetch("/habit/api/dashboard");
-        const data = await res.json();
-
-        document.getElementById("todayCount").innerText = data.today;
-        document.getElementById("streakCount").innerText = data.streak;
-        document.getElementById("scoreCount").innerText = data.score;
-    } catch (e) {
-        console.log("API not available");
-    }
-}
-
-loadDashboardStats();
-</script>
 
 </body>
 </html>
