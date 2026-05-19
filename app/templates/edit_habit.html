@@ -2,90 +2,285 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Edit Habit</title>
 
     <style>
-        body {
-            font-family: Arial;
-            background: #f4f6f8;
-            margin: 0;
-            padding: 20px;
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        .container {
-            max-width: 500px;
-            margin: auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        body{
+            font-family: Arial, sans-serif;
+            background:#0d1117;
+            color:#e6edf3;
         }
 
-        h2 {
-            text-align: center;
+        /* ================= NAVBAR ================= */
+
+        .navbar{
+            width:100%;
+            background:#161b22;
+            border-bottom:1px solid #30363d;
+            padding:15px 40px;
+
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
         }
 
-        label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
+        .logo{
+            font-size:22px;
+            font-weight:bold;
+            color:#58a6ff;
         }
 
-        input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+        .nav-links{
+            display:flex;
+            gap:15px;
         }
 
-        .btn {
-            width: 100%;
-            margin-top: 20px;
-            padding: 10px;
-            border: none;
-            background: #2ecc71;
-            color: white;
-            font-size: 16px;
-            border-radius: 6px;
-            cursor: pointer;
+        .nav-links a{
+            text-decoration:none;
+            color:#e6edf3;
+            padding:10px 15px;
+            border-radius:8px;
+            transition:0.3s;
         }
 
-        .btn:hover {
-            background: #27ae60;
+        .nav-links a:hover{
+            background:#21262d;
         }
 
-        .back {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            text-decoration: none;
-            color: #333;
+        .logout{
+            background:#da3633;
         }
+
+        .logout:hover{
+            background:#f85149;
+        }
+
+        /* ================= CONTAINER ================= */
+
+        .container{
+            max-width:600px;
+            margin:60px auto;
+            padding:30px;
+        }
+
+        .card{
+            background:#161b22;
+            border:1px solid #30363d;
+            border-radius:18px;
+            padding:35px;
+
+            box-shadow:0 0 20px rgba(0,0,0,0.4);
+        }
+
+        .title{
+            text-align:center;
+            margin-bottom:30px;
+        }
+
+        .title h1{
+            font-size:32px;
+            margin-bottom:10px;
+        }
+
+        .title p{
+            color:#8b949e;
+        }
+
+        /* ================= FORM ================= */
+
+        .form-group{
+            margin-bottom:22px;
+        }
+
+        label{
+            display:block;
+            margin-bottom:8px;
+            font-weight:bold;
+            color:#c9d1d9;
+        }
+
+        input{
+            width:100%;
+            padding:14px;
+            border:none;
+            outline:none;
+            border-radius:10px;
+
+            background:#0d1117;
+            border:1px solid #30363d;
+            color:white;
+
+            font-size:16px;
+        }
+
+        input:focus{
+            border:1px solid #58a6ff;
+            box-shadow:0 0 10px rgba(88,166,255,0.3);
+        }
+
+        /* ================= BUTTONS ================= */
+
+        .button-group{
+            display:flex;
+            gap:15px;
+            margin-top:25px;
+        }
+
+        .save-btn{
+            flex:1;
+            padding:14px;
+            background:#238636;
+            color:white;
+            border:none;
+            border-radius:10px;
+            font-size:16px;
+            cursor:pointer;
+            transition:0.3s;
+            font-weight:bold;
+        }
+
+        .save-btn:hover{
+            background:#2ea043;
+            transform:translateY(-2px);
+        }
+
+        .cancel-btn{
+            flex:1;
+            padding:14px;
+            background:#30363d;
+            color:white;
+            text-decoration:none;
+            border-radius:10px;
+            text-align:center;
+            transition:0.3s;
+            font-weight:bold;
+        }
+
+        .cancel-btn:hover{
+            background:#484f58;
+        }
+
+        /* ================= MOBILE ================= */
+
+        @media(max-width:700px){
+
+            .navbar{
+                flex-direction:column;
+                gap:15px;
+            }
+
+            .nav-links{
+                flex-wrap:wrap;
+                justify-content:center;
+            }
+
+            .container{
+                padding:20px;
+            }
+
+            .button-group{
+                flex-direction:column;
+            }
+        }
+
     </style>
 </head>
 
 <body>
 
-<div class="container">
+    <!-- ================= NAVBAR ================= -->
 
-    <h2>✏️ Edit Habit</h2>
+    <div class="navbar">
 
-    <!-- FORM -->
-    <form method="POST">
+        <div class="logo">
+            Habit Tracker
+        </div>
 
-        <label>Habit Name</label>
-        <input type="text" name="name" value="{{ habit.name }}" required>
+        <div class="nav-links">
 
-        <label>Time</label>
-        <input type="text" name="time" value="{{ habit.time }}" required>
+            <a href="/dashboard">Dashboard</a>
 
-        <button class="btn" type="submit">Update Habit</button>
-    </form>
+            <a href="/weekly">Weekly</a>
 
-    <a class="back" href="{{ url_for('habit.habits') }}">⬅ Back to Habits</a>
+            <a href="/analytics">Analytics</a>
 
-</div>
+            <a href="/habits">Habits</a>
+
+            <a href="/logout" class="logout">Logout</a>
+
+        </div>
+
+    </div>
+
+    <!-- ================= EDIT FORM ================= -->
+
+    <div class="container">
+
+        <div class="card">
+
+            <div class="title">
+
+                <h1>✏️ Edit Habit</h1>
+
+                <p>Update your habit details</p>
+
+            </div>
+
+            <form method="POST">
+
+                <div class="form-group">
+
+                    <label>Habit Name</label>
+
+                    <input
+                        type="text"
+                        name="name"
+                        value="{{ habit.name }}"
+                        required
+                    >
+
+                </div>
+
+                <div class="form-group">
+
+                    <label>Habit Time</label>
+
+                    <input
+                        type="text"
+                        name="time"
+                        value="{{ habit.time }}"
+                        required
+                    >
+
+                </div>
+
+                <div class="button-group">
+
+                    <button type="submit" class="save-btn">
+                        Save Changes
+                    </button>
+
+                    <a href="/habits" class="cancel-btn">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
 
 </body>
 </html>
+

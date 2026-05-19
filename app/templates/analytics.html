@@ -1,176 +1,455 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Analytics Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <title>Analytics</title>
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body {
-            font-family: Arial;
-            background: #f4f6f8;
-            padding: 20px;
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        h1 {
-            text-align: center;
+        body{
+            font-family: Arial, sans-serif;
+            background:#0d1117;
+            color:#e6edf3;
         }
 
-        .cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+        /* ================= NAVBAR ================= */
+
+        .navbar{
+            width:100%;
+            background:#161b22;
+            padding:15px 30px;
+            border-bottom:1px solid #30363d;
+
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
         }
 
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            text-align: center;
+        .logo{
+            font-size:22px;
+            font-weight:bold;
+            color:#58a6ff;
         }
 
-        .chart-container {
-            margin-top: 40px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
+        .nav-links{
+            display:flex;
+            gap:15px;
         }
 
-        .heatmap {
-            display: grid;
-            grid-template-columns: repeat(10, 20px);
-            gap: 5px;
-            margin-top: 20px;
-            justify-content: center;
+        .nav-links a{
+            text-decoration:none;
+            color:white;
+            padding:10px 15px;
+            border-radius:8px;
+            transition:0.3s;
         }
 
-        .cell {
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
+        .nav-links a:hover{
+            background:#21262d;
         }
 
-        .level-0 { background: #ebedf0; }
-        .level-1 { background: #c6e48b; }
-        .level-2 { background: #7bc96f; }
-        .level-3 { background: #196127; }
-
-        .habit-list {
-            margin-top: 30px;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
+        .logout-btn{
+            background:#da3633;
         }
+
+        .logout-btn:hover{
+            background:#f85149;
+        }
+
+        /* ================= MAIN ================= */
+
+        .container{
+            width:95%;
+            max-width:1400px;
+            margin:auto;
+            padding:30px 0;
+        }
+
+        .page-title{
+            text-align:center;
+            margin-bottom:30px;
+            font-size:38px;
+        }
+
+        /* ================= STATS ================= */
+
+        .stats-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+            gap:20px;
+            margin-bottom:30px;
+        }
+
+        .card{
+            background:#161b22;
+            padding:25px;
+            border-radius:16px;
+            border:1px solid #30363d;
+            transition:0.3s;
+        }
+
+        .card:hover{
+            transform:translateY(-5px);
+            border-color:#58a6ff;
+        }
+
+        .card h3{
+            color:#8b949e;
+            margin-bottom:15px;
+        }
+
+        .card .value{
+            font-size:42px;
+            font-weight:bold;
+            color:#58a6ff;
+        }
+
+        /* ================= CHARTS ================= */
+
+        .chart-grid{
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:20px;
+            margin-bottom:30px;
+        }
+
+        .chart-box{
+            background:#161b22;
+            padding:20px;
+            border-radius:16px;
+            border:1px solid #30363d;
+        }
+
+        .chart-box h2{
+            margin-bottom:20px;
+        }
+
+        canvas{
+            width:100% !important;
+            height:320px !important;
+        }
+
+        /* ================= HEATMAP ================= */
+
+        .heatmap-box{
+            background:#161b22;
+            padding:25px;
+            border-radius:16px;
+            border:1px solid #30363d;
+        }
+
+        .heatmap-title{
+            margin-bottom:20px;
+        }
+
+        .heatmap{
+            display:grid;
+            grid-template-columns:repeat(10,1fr);
+            gap:8px;
+        }
+
+        .heat-cell{
+            width:100%;
+            aspect-ratio:1/1;
+            border-radius:6px;
+        }
+
+        .lvl0{
+            background:#161b22;
+            border:1px solid #30363d;
+        }
+
+        .lvl1{
+            background:#0e4429;
+        }
+
+        .lvl2{
+            background:#006d32;
+        }
+
+        .lvl3{
+            background:#26a641;
+        }
+
+        /* ================= RESPONSIVE ================= */
+
+        @media(max-width:900px){
+
+            .chart-grid{
+                grid-template-columns:1fr;
+            }
+
+            .nav-links{
+                flex-wrap:wrap;
+            }
+
+            .page-title{
+                font-size:28px;
+            }
+
+        }
+
     </style>
 </head>
 
 <body>
 
-<h1>📊 Analytics Dashboard</h1>
+<!-- ================= NAVBAR ================= -->
 
-<!-- 🔥 Stats -->
-<div class="cards">
-    <div class="card">
-        <h3>🔥 Streak</h3>
-        <h2 id="streak">-</h2>
+<div class="navbar">
+
+    <div class="logo">
+        Habit Tracker
     </div>
 
-    <div class="card">
-        <h3>📈 Completion Rate</h3>
-        <h2 id="rate">-</h2>
+    <div class="nav-links">
+
+        <a href="/dashboard">Dashboard</a>
+
+        <a href="/weekly">Weekly</a>
+
+        <a href="/analytics">Analytics</a>
+
+        <a href="/logout" class="logout-btn">Logout</a>
+
     </div>
 
-    <div class="card">
-        <h3>🏆 Top Habit</h3>
-        <h2 id="topHabit">-</h2>
+</div>
+
+<!-- ================= MAIN ================= -->
+
+<div class="container">
+
+    <h1 class="page-title">
+        📊 Advanced Analytics
+    </h1>
+
+    <!-- ================= STATS ================= -->
+
+    <div class="stats-grid">
+
+        <div class="card">
+            <h3>Completion Rate</h3>
+            <div class="value" id="completionRate">0%</div>
+        </div>
+
+        <div class="card">
+            <h3>Current Streak</h3>
+            <div class="value" id="streak">0</div>
+        </div>
+
+        <div class="card">
+            <h3>Top Habit</h3>
+            <div class="value" id="topHabit">-</div>
+        </div>
+
+        <div class="card">
+            <h3>Missed Days</h3>
+            <div class="value" id="missedDays">0</div>
+        </div>
+
     </div>
 
-    <div class="card">
-        <h3>❌ Missed Days</h3>
-        <h2 id="missed">-</h2>
+    <!-- ================= CHARTS ================= -->
+
+    <div class="chart-grid">
+
+        <!-- WEEKLY TREND -->
+
+        <div class="chart-box">
+
+            <h2>📈 Weekly Progress</h2>
+
+            <canvas id="weeklyChart"></canvas>
+
+        </div>
+
+        <!-- HABIT STATS -->
+
+        <div class="chart-box">
+
+            <h2>🏆 Habit Performance</h2>
+
+            <canvas id="habitChart"></canvas>
+
+        </div>
+
     </div>
+
+    <!-- ================= HEATMAP ================= -->
+
+    <div class="heatmap-box">
+
+        <h2 class="heatmap-title">
+            🔥 30-Day Activity Heatmap
+        </h2>
+
+        <div class="heatmap" id="heatmap"></div>
+
+    </div>
+
 </div>
 
-<!-- 📊 Weekly Chart -->
-<div class="chart-container">
-    <h3>📅 Weekly Activity</h3>
-    <canvas id="weeklyChart"></canvas>
-</div>
-
-<!-- 🏆 Habit Leaderboard -->
-<div class="habit-list">
-    <h3>🏆 Habit Performance</h3>
-    <ul id="habitStats"></ul>
-</div>
-
-<!-- 🟩 Heatmap -->
-<div class="chart-container">
-    <h3>🟩 Last 30 Days Activity</h3>
-    <div id="heatmap" class="heatmap"></div>
-</div>
+<!-- ================= SCRIPT ================= -->
 
 <script>
-async function loadAnalytics() {
-    const res = await fetch("/api/analytics", {
-        credentials: "same-origin"
-    });
 
-    const data = await res.json();
+async function loadAnalytics(){
 
-    // ✅ Cards (updated keys)
-    document.getElementById("streak").innerText = data.streak + " days";
-    document.getElementById("rate").innerText = data.completion_rate + "%";
-    document.getElementById("topHabit").innerText = data.top_habit || "N/A";
-    document.getElementById("missed").innerText = data.missed_days;
+    const response = await fetch("/api/analytics");
 
-    // ✅ Weekly Chart (dynamic labels)
-    const ctx = document.getElementById("weeklyChart").getContext("2d");
+    const data = await response.json();
 
-    new Chart(ctx, {
-        type: "bar",
+    // ================= STATS =================
+
+    document.getElementById("completionRate").innerText =
+        data.completion_rate + "%";
+
+    document.getElementById("streak").innerText =
+        data.streak + " 🔥";
+
+    document.getElementById("topHabit").innerText =
+        data.top_habit || "-";
+
+    document.getElementById("missedDays").innerText =
+        data.missed_days;
+
+    // ================= WEEKLY CHART =================
+
+    new Chart(document.getElementById("weeklyChart"), {
+
+        type: "line",
+
         data: {
+
             labels: data.weekly_labels,
+
             datasets: [{
-                label: "Habits Completed",
+
+                label: "Completed Habits",
+
                 data: data.weekly_trend,
-                borderWidth: 1
+
+                borderColor: "#58a6ff",
+
+                backgroundColor: "rgba(88,166,255,0.2)",
+
+                tension:0.4,
+
+                fill:true
+
             }]
+
         },
-        options: {
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: { precision: 0 }
+
+        options:{
+            responsive:true,
+            plugins:{
+                legend:{
+                    labels:{
+                        color:"white"
+                    }
+                }
+            },
+            scales:{
+                x:{
+                    ticks:{ color:"white" },
+                    grid:{ color:"#30363d" }
+                },
+                y:{
+                    ticks:{ color:"white" },
+                    grid:{ color:"#30363d" }
                 }
             }
         }
+
     });
 
-    // ✅ Habit leaderboard
-    const list = document.getElementById("habitStats");
-    list.innerHTML = "";
+    // ================= HABIT CHART =================
 
-    data.habit_stats.forEach(habit => {
-        const li = document.createElement("li");
-        li.innerText = `${habit.name} → ${habit.count}`;
-        list.appendChild(li);
+    new Chart(document.getElementById("habitChart"), {
+
+        type: "bar",
+
+        data: {
+
+            labels: data.habit_stats.map(h => h.name),
+
+            datasets: [{
+
+                label:"Completions",
+
+                data: data.habit_stats.map(h => h.count),
+
+                backgroundColor:[
+                    "#58a6ff",
+                    "#2ea043",
+                    "#db6d28",
+                    "#8957e5",
+                    "#f85149"
+                ]
+
+            }]
+
+        },
+
+        options:{
+            responsive:true,
+            plugins:{
+                legend:{
+                    labels:{
+                        color:"white"
+                    }
+                }
+            },
+            scales:{
+                x:{
+                    ticks:{ color:"white" },
+                    grid:{ color:"#30363d" }
+                },
+                y:{
+                    ticks:{ color:"white" },
+                    grid:{ color:"#30363d" }
+                }
+            }
+        }
+
     });
 
-    // ✅ Heatmap
+    // ================= HEATMAP =================
+
     const heatmap = document.getElementById("heatmap");
+
     heatmap.innerHTML = "";
 
     data.heatmap.forEach(day => {
-        const cell = document.createElement("div");
-        cell.className = "cell level-" + day.intensity;
-        cell.title = `${day.date} → ${day.count}`;
-        heatmap.appendChild(cell);
+
+        const div = document.createElement("div");
+
+        div.className = `heat-cell lvl${day.intensity}`;
+
+        div.title =
+            `${day.date} → ${day.count} habits`;
+
+        heatmap.appendChild(div);
+
     });
+
 }
 
 loadAnalytics();
+
 </script>
 
 </body>

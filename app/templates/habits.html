@@ -3,220 +3,468 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Habits</title>
+    <title>Habits | Habit Tracker</title>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            margin: 0;
-            padding: 20px;
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        h2 {
-            text-align: center;
+        body{
+            background:#0d1117;
+            color:#e6edf3;
+            font-family:Arial, sans-serif;
+            min-height:100vh;
         }
 
-        nav {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+        /* ================= CONTAINER ================= */
+
+        .container{
+            width:95%;
+            max-width:1200px;
+            margin:auto;
+            padding:30px 20px;
         }
 
-        nav a {
-            text-decoration: none;
-            font-weight: bold;
-            color: #333;
+        /* ================= HEADER ================= */
+
+        .header{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:15px;
+            margin-bottom:30px;
         }
 
-        .search-box {
-            text-align: center;
-            margin-bottom: 15px;
+        .title{
+            font-size:32px;
+            font-weight:bold;
         }
 
-        .search-box input {
-            padding: 10px;
-            width: 250px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+        /* ================= NAVBAR ================= */
+
+        .nav{
+            display:flex;
+            gap:12px;
+            flex-wrap:wrap;
         }
 
-        .container {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-            overflow-x: auto; /* FIX: prevents table overflow on mobile */
+        .nav a{
+            text-decoration:none;
+            color:#e6edf3;
+            background:#161b22;
+            border:1px solid #30363d;
+            padding:10px 16px;
+            border-radius:8px;
+            transition:0.2s;
+            font-size:14px;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .nav a:hover{
+            background:#21262d;
+            border-color:#58a6ff;
         }
 
-        th {
-            background: #2c3e50;
-            color: white;
-            padding: 10px;
+        /* ================= SEARCH ================= */
+
+        .search-box{
+            margin-bottom:25px;
         }
 
-        td {
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #eee;
+        .search-box input{
+            width:100%;
+            padding:14px;
+            border-radius:10px;
+            border:1px solid #30363d;
+            background:#161b22;
+            color:#e6edf3;
+            font-size:15px;
+            outline:none;
         }
 
-        tr:nth-child(even) {
-            background: #f9f9f9;
+        .search-box input:focus{
+            border-color:#58a6ff;
         }
 
-        .status {
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            color: white;
+        /* ================= TABLE ================= */
+
+        .table-wrapper{
+            overflow-x:auto;
+            border-radius:14px;
+            border:1px solid #30363d;
+            background:#161b22;
         }
 
-        .active {
-            background: #e74c3c;
+        table{
+            width:100%;
+            border-collapse:collapse;
+            min-width:900px;
         }
 
-        .done {
-            background: #2ecc71;
+        thead{
+            background:#21262d;
         }
 
-        .btn {
-            padding: 5px 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        th{
+            padding:18px;
+            text-align:center;
+            font-size:14px;
+            color:#f0f6fc;
+            border-bottom:1px solid #30363d;
         }
 
-        .edit {
-            background: orange;
-            color: white;
+        td{
+            padding:18px;
+            text-align:center;
+            border-bottom:1px solid #21262d;
+            font-size:14px;
         }
 
-        .delete {
-            background: red;
-            color: white;
+        tbody tr:hover{
+            background:#1c2128;
         }
 
-        .empty {
-            text-align: center;
-            padding: 20px;
-            color: #777;
+        /* ================= STATUS ================= */
+
+        .status{
+            padding:6px 12px;
+            border-radius:20px;
+            font-size:12px;
+            font-weight:bold;
+            display:inline-block;
         }
 
-        @media (max-width: 768px) {
-            table {
-                font-size: 12px;
+        .done{
+            background:rgba(46,160,67,0.15);
+            color:#3fb950;
+            border:1px solid #238636;
+        }
+
+        .active{
+            background:rgba(248,81,73,0.15);
+            color:#f85149;
+            border:1px solid #da3633;
+        }
+
+        /* ================= CHECKBOX ================= */
+
+        input[type="checkbox"]{
+            transform:scale(1.3);
+            cursor:pointer;
+            accent-color:#2ea043;
+        }
+
+        /* ================= BUTTONS ================= */
+
+        .btn{
+            padding:8px 14px;
+            border:none;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:13px;
+            font-weight:bold;
+            text-decoration:none;
+            transition:0.2s;
+            display:inline-block;
+        }
+
+        .edit-btn{
+            background:#1f6feb;
+            color:white;
+        }
+
+        .edit-btn:hover{
+            background:#388bfd;
+        }
+
+        .delete-btn{
+            background:#da3633;
+            color:white;
+        }
+
+        .delete-btn:hover{
+            background:#f85149;
+        }
+
+        /* ================= EMPTY ================= */
+
+        .empty{
+            text-align:center;
+            padding:50px 20px;
+            background:#161b22;
+            border:1px solid #30363d;
+            border-radius:14px;
+            color:#8b949e;
+        }
+
+        .empty h3{
+            margin-bottom:10px;
+            color:#e6edf3;
+        }
+
+        /* ================= MOBILE ================= */
+
+        @media(max-width:768px){
+
+            .header{
+                flex-direction:column;
+                align-items:flex-start;
             }
+
+            .title{
+                font-size:26px;
+            }
+
+            .nav{
+                width:100%;
+            }
+
+            .nav a{
+                flex:1;
+                text-align:center;
+            }
+
         }
+
     </style>
 </head>
 
 <body>
 
-<!-- NAV -->
-<nav>
-    <a href="{{ url_for('habit.dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('habit.habits') }}">Habits</a>
-    <a href="{{ url_for('habit.weekly_page') }}">Weekly</a>
-    <a href="{{ url_for('habit.analytics_page') }}">Analytics</a>
-    <a href="{{ url_for('auth.logout') }}">Logout</a>
-</nav>
-
-<h2>📋 My Habits</h2>
-
-<!-- SEARCH -->
-<div class="search-box">
-    <input type="text" id="searchInput" placeholder="🔍 Search habits...">
-</div>
-
 <div class="container">
 
-{% if habits and habits|length > 0 %}
+    <!-- ================= HEADER ================= -->
 
-<table id="habitTable">
-<thead>
-<tr>
-    <th>Name</th>
-    <th>Time</th>
-    <th>Created</th>
-    <th>Done</th>
-    <th>Status</th>
-    <th>Edit</th>
-    <th>Delete</th>
-</tr>
-</thead>
+    <div class="header">
 
-<tbody>
-{% for habit in habits %}
-<tr>
-    <td>{{ habit.name }}</td>
-    <td>{{ habit.time }}</td>
-    <td>{{ habit.created_at }}</td>
+        <div class="title">
+            📋 My Habits
+        </div>
 
-    <!-- TOGGLE -->
-    <td>
-        <form method="POST" action="{{ url_for('habit.toggle_habit', habit_id=habit._id|string) }}">
-            <input type="checkbox"
-                   onchange="this.form.submit()"
-                   {% if habit._id|string in completed_ids %}checked{% endif %}>
-        </form>
-    </td>
+        <div class="nav">
 
-    <!-- STATUS -->
-    <td>
-        {% if habit._id|string in completed_ids %}
-            <span class="status done">Done</span>
-        {% else %}
-            <span class="status active">Active</span>
-        {% endif %}
-    </td>
+            <a href="{{ url_for('habit.dashboard') }}">
+                Dashboard
+            </a>
 
-    <!-- EDIT -->
-    <td>
-        <a href="{{ url_for('habit.edit_habit', id=habit._id|string) }}">
-            <button type="button" class="btn edit">Edit</button>
-        </a>
-    </td>
+            <a href="{{ url_for('habit.habits') }}">
+                Habits
+            </a>
 
-    <!-- DELETE -->
-    <td>
-        <form method="POST"
-              action="{{ url_for('habit.delete_habit', id=habit._id|string) }}"
-              onsubmit="return confirm('⚠ Are you sure you want to delete this habit?')">
-            <button type="submit" class="btn delete">Delete</button>
-        </form>
-    </td>
-</tr>
-{% endfor %}
-</tbody>
-</table>
+            <a href="{{ url_for('habit.weekly_page') }}">
+                Weekly
+            </a>
 
-{% else %}
-<div class="empty">
-    😴 No habits yet! Add one from Dashboard.
+            <a href="{{ url_for('habit.analytics_page') }}">
+                Analytics
+            </a>
+
+            <a href="{{ url_for('auth.logout') }}">
+                Logout
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- ================= SEARCH ================= -->
+
+    <div class="search-box">
+
+        <input
+            type="text"
+            id="searchInput"
+            placeholder="🔍 Search habits..."
+        >
+
+    </div>
+
+    <!-- ================= TABLE ================= -->
+
+    {% if habits and habits|length > 0 %}
+
+    <div class="table-wrapper">
+
+        <table id="habitTable">
+
+            <thead>
+
+                <tr>
+
+                    <th>Habit</th>
+
+                    <th>Time</th>
+
+                    <th>Created</th>
+
+                    <th>Done</th>
+
+                    <th>Status</th>
+
+                    <th>Edit</th>
+
+                    <th>Delete</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for habit in habits %}
+
+                <tr>
+
+                    <td>
+                        {{ habit.name }}
+                    </td>
+
+                    <td>
+                        {{ habit.time }}
+                    </td>
+
+                    <td>
+                        {{ habit.created_at }}
+                    </td>
+
+                    <!-- TOGGLE -->
+
+                    <td>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('habit.toggle_habit', habit_id=habit._id|string) }}"
+                        >
+
+                            <input
+                                type="checkbox"
+                                onchange="this.form.submit()"
+                                {% if habit._id|string in completed_ids %}
+                                    checked
+                                {% endif %}
+                            >
+
+                        </form>
+
+                    </td>
+
+                    <!-- STATUS -->
+
+                    <td>
+
+                        {% if habit._id|string in completed_ids %}
+
+                            <span class="status done">
+                                Completed
+                            </span>
+
+                        {% else %}
+
+                            <span class="status active">
+                                Pending
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <!-- EDIT -->
+
+                    <td>
+
+                        <a
+                            href="{{ url_for('habit.edit_habit', habit_id=habit._id|string) }}"
+                            class="btn edit-btn"
+                        >
+                            Edit
+                        </a>
+
+                    </td>
+
+                    <!-- DELETE -->
+
+                    <td>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('habit.delete_habit', habit_id=habit._id|string) }}"
+                            onsubmit="return confirm('Delete this habit?')"
+                        >
+
+                            <button
+                                type="submit"
+                                class="btn delete-btn"
+                            >
+                                Delete
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty">
+
+        <h3>
+            😴 No habits found
+        </h3>
+
+        <p>
+            Create your first habit from the dashboard.
+        </p>
+
+    </div>
+
+    {% endif %}
+
 </div>
-{% endif %}
 
-</div>
+<!-- ================= SEARCH SCRIPT ================= -->
 
-<!-- SEARCH SCRIPT -->
 <script>
-document.getElementById("searchInput").addEventListener("keyup", function () {
-    let value = this.value.toLowerCase();
-    let rows = document.querySelectorAll("#habitTable tbody tr");
 
-    rows.forEach(row => {
-        let text = row.innerText.toLowerCase();
-        row.style.display = text.includes(value) ? "" : "none";
+    const searchInput =
+        document.getElementById("searchInput");
+
+    searchInput.addEventListener("keyup", function(){
+
+        let value =
+            this.value.toLowerCase();
+
+        let rows =
+            document.querySelectorAll(
+                "#habitTable tbody tr"
+            );
+
+        rows.forEach(row => {
+
+            let text =
+                row.innerText.toLowerCase();
+
+            row.style.display =
+                text.includes(value)
+                ? ""
+                : "none";
+
+        });
+
     });
-});
+
 </script>
 
 </body>

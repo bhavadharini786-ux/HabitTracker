@@ -1,29 +1,31 @@
+
 from flask import Flask
-from dotenv import load_dotenv
-import os
+from flask_cors import CORS
+from app.utils.db import init_db
 
-from .utils.db import init_db
-from .routes.auth_routes import auth_bp
-from .routes.habit_routes import habit_bp
-
+# IMPORT BLUEPRINTS
+from app.routes.habit_routes import habit_bp
+from app.routes.auth_routes import auth_bp
 
 def create_app():
+    app = Flask(__name__)
 
-    # ✅ IMPORTANT: explicitly set template folder
-    app = Flask(__name__, template_folder="templates")
+    # ENABLE CORS
+    CORS(app)
 
-    load_dotenv()
+    app.config["SECRET_KEY"] = "your_secret_key"
+    app.config["MONGO_URI"] = "mongodb://localhost:27017/habittracker"
 
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "fallback-secret")
-    app.config["MONGO_URI"] = os.getenv("MONGO_URI")
-
-    app.config["SESSION_COOKIE_HTTPONLY"] = True
-    app.config["SESSION_COOKIE_SECURE"] = False
-    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-
+    # INIT DATABASE
     init_db(app)
 
+    # REGISTER BLUEPRINTS
     app.register_blueprint(auth_bp)
-    app.register_blueprint(habit_bp, url_prefix="/habit")
+    app.register_blueprint(habit_bp)
+
+    @app.route("/")
+    def home():
+        return "Habit Tracker App Running!"
 
     return app
+

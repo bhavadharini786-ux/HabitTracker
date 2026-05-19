@@ -1,121 +1,412 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Weekly Heatmap</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Analytics</title>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body {
-            font-family: Arial;
-            background: #f4f6f8;
-            padding: 20px;
-            text-align: center;
+
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
         }
 
-        h1 {
-            margin-bottom: 20px;
+        body{
+            background:#0d1117;
+            color:#e6edf3;
+            font-family:Arial, sans-serif;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(7, 50px);
-            gap: 10px;
-            justify-content: center;
-            margin-top: 20px;
+        /* ================= NAVBAR ================= */
+
+        .navbar{
+            background:#161b22;
+            padding:18px 30px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            border-bottom:1px solid #30363d;
         }
 
-        .cell {
-            width: 50px;
-            height: 50px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: 0.2s;
+        .logo{
+            font-size:24px;
+            font-weight:bold;
+            color:#58a6ff;
         }
 
-        .cell:hover {
-            transform: scale(1.1);
+        .nav-links a{
+            text-decoration:none;
+            color:white;
+            margin-left:20px;
+            font-weight:bold;
+            transition:0.3s;
         }
 
-        /* GitHub-style colors */
-        .level-0 { background: #ebedf0; }
-        .level-1 { background: #c6e48b; }
-        .level-2 { background: #7bc96f; }
-        .level-3 { background: #196127; }
-
-        .labels {
-            display: grid;
-            grid-template-columns: repeat(7, 50px);
-            gap: 10px;
-            justify-content: center;
-            margin-top: 10px;
-            font-size: 12px;
+        .nav-links a:hover{
+            color:#58a6ff;
         }
 
-        .stats {
-            margin-top: 30px;
-            font-size: 16px;
+        /* ================= MAIN ================= */
+
+        .container{
+            max-width:1200px;
+            margin:auto;
+            padding:30px 20px;
         }
+
+        h1{
+            text-align:center;
+            margin-bottom:30px;
+            font-size:40px;
+        }
+
+        /* ================= STATS ================= */
+
+        .stats{
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+            gap:20px;
+            margin-bottom:30px;
+        }
+
+        .card{
+            background:#161b22;
+            border:1px solid #30363d;
+            border-radius:15px;
+            padding:30px;
+            text-align:center;
+            transition:0.3s;
+        }
+
+        .card:hover{
+            transform:translateY(-5px);
+            border-color:#58a6ff;
+        }
+
+        .card h2{
+            font-size:42px;
+            margin-bottom:10px;
+            color:#58a6ff;
+        }
+
+        .card p{
+            color:#8b949e;
+            font-size:18px;
+        }
+
+        /* ================= CHART SECTION ================= */
+
+        .chart-box{
+            background:#161b22;
+            border:1px solid #30363d;
+            border-radius:15px;
+            padding:30px;
+            margin-bottom:30px;
+        }
+
+        .chart-box h2{
+            margin-bottom:20px;
+        }
+
+        /* ================= ACTIVITY GRID ================= */
+
+        .activity-section{
+            background:#161b22;
+            border:1px solid #30363d;
+            border-radius:15px;
+            padding:30px;
+        }
+
+        .activity-section h2{
+            margin-bottom:20px;
+        }
+
+        .grid{
+            display:grid;
+            grid-template-columns:repeat(7,1fr);
+            gap:10px;
+        }
+
+        .day-box{
+            background:#21262d;
+            padding:20px 10px;
+            border-radius:10px;
+            text-align:center;
+            transition:0.3s;
+        }
+
+        .day-box:hover{
+            transform:scale(1.05);
+        }
+
+        .count{
+            font-size:30px;
+            font-weight:bold;
+            margin:10px 0;
+        }
+
+        .low{
+            background:#1b4332;
+        }
+
+        .medium{
+            background:#2d6a4f;
+        }
+
+        .high{
+            background:#40916c;
+        }
+
+        .none{
+            background:#21262d;
+        }
+
+        /* ================= FOOTER ================= */
+
+        .footer{
+            text-align:center;
+            margin-top:40px;
+            color:#8b949e;
+        }
+
+        @media(max-width:800px){
+
+            .grid{
+                grid-template-columns:repeat(2,1fr);
+            }
+
+            .navbar{
+                flex-direction:column;
+                gap:15px;
+            }
+
+        }
+
     </style>
 </head>
 
 <body>
 
-<h1>📅 Weekly Heatmap</h1>
+<!-- ================= NAVBAR ================= -->
 
-<div id="grid" class="grid"></div>
+<div class="navbar">
 
-<div class="labels">
-    <div>Mon</div><div>Tue</div><div>Wed</div>
-    <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+    <div class="logo">Habit Tracker</div>
+
+    <div class="nav-links">
+
+        <a href="/dashboard">Dashboard</a>
+
+        <a href="/weekly">Weekly</a>
+
+        <a href="/analytics">Analytics</a>
+
+        <a href="/logout">Logout</a>
+
+    </div>
+
 </div>
 
-<div id="stats" class="stats"></div>
+<!-- ================= CONTENT ================= -->
+
+<div class="container">
+
+    <h1>📅 Weekly Insights</h1>
+
+    <!-- ================= STATS ================= -->
+
+    <div class="stats">
+
+        <div class="card">
+            <h2 id="streak">0</h2>
+            <p>🔥 Current Streak</p>
+        </div>
+
+        <div class="card">
+            <h2 id="consistency">0%</h2>
+            <p>📊 Consistency</p>
+        </div>
+
+        <div class="card">
+            <h2 id="total">0</h2>
+            <p>✅ Weekly Completions</p>
+        </div>
+
+    </div>
+
+    <!-- ================= GRAPH ================= -->
+
+    <div class="chart-box">
+
+        <h2>📈 Weekly Performance Graph</h2>
+
+        <canvas id="weeklyChart"></canvas>
+
+    </div>
+
+    <!-- ================= ACTIVITY ================= -->
+
+    <div class="activity-section">
+
+        <h2>🟩 Weekly Activity Heatmap</h2>
+
+        <div class="grid" id="weekGrid">
+
+        </div>
+
+    </div>
+
+    <div class="footer">
+        Build consistency one day at a time 🚀
+    </div>
+
+</div>
+
+<!-- ================= SCRIPT ================= -->
 
 <script>
-async function loadWeekly() {
-    try {
-        const res = await fetch("/api/weekly", {
-            credentials: "same-origin"
-        });
 
-        if (!res.ok) throw new Error("API error");
+async function loadWeekly(){
 
-        const data = await res.json();
-        const days = data.days;
+    const response = await fetch("/api/weekly");
 
-        const grid = document.getElementById("grid");
-        grid.innerHTML = "";
+    const data = await response.json();
 
-        days.forEach(day => {
-            const cell = document.createElement("div");
+    // ================= STATS =================
 
-            // 👇 now comes from backend
-            const level = day.intensity;
+    document.getElementById("streak").innerText =
+        data.streak;
 
-            cell.className = "cell level-" + level;
-            cell.title = `${day.date} → ${day.count} habits`;
+    document.getElementById("consistency").innerText =
+        data.consistency + "%";
 
-            // optional click interaction
-            cell.onclick = () => {
-                alert(`${day.date}\nCompleted: ${day.count}`);
-            };
+    let total = 0;
 
-            grid.appendChild(cell);
-        });
+    data.days.forEach(day => {
+        total += day.count;
+    });
 
-        // stats
-        document.getElementById("stats").innerHTML = `
-            🔥 Streak: ${data.streak} days <br>
-            📊 Consistency: ${data.consistency}%
+    document.getElementById("total").innerText =
+        total;
+
+    // ================= CHART =================
+
+    const labels = data.days.map(day => day.date);
+
+    const values = data.days.map(day => day.count);
+
+    const ctx = document.getElementById("weeklyChart");
+
+    new Chart(ctx, {
+
+        type: 'line',
+
+        data: {
+
+            labels: labels,
+
+            datasets: [{
+
+                label: 'Completed Habits',
+
+                data: values,
+
+                borderColor: '#58a6ff',
+
+                backgroundColor: 'rgba(88,166,255,0.2)',
+
+                fill: true,
+
+                tension: 0.4,
+
+                borderWidth: 3
+
+            }]
+        },
+
+        options: {
+
+            responsive:true,
+
+            plugins:{
+                legend:{
+                    labels:{
+                        color:'white'
+                    }
+                }
+            },
+
+            scales:{
+
+                x:{
+                    ticks:{
+                        color:'white'
+                    },
+
+                    grid:{
+                        color:'#30363d'
+                    }
+                },
+
+                y:{
+                    beginAtZero:true,
+
+                    ticks:{
+                        color:'white'
+                    },
+
+                    grid:{
+                        color:'#30363d'
+                    }
+                }
+            }
+        }
+    });
+
+    // ================= HEATMAP =================
+
+    const grid = document.getElementById("weekGrid");
+
+    grid.innerHTML = "";
+
+    data.days.forEach(day => {
+
+        let level = "none";
+
+        if(day.count >= 1 && day.count <= 2){
+            level = "low";
+        }
+        else if(day.count >= 3 && day.count <= 5){
+            level = "medium";
+        }
+        else if(day.count > 5){
+            level = "high";
+        }
+
+        grid.innerHTML += `
+
+            <div class="day-box ${level}">
+
+                <h3>${day.date}</h3>
+
+                <div class="count">${day.count}</div>
+
+                <p>Habits Done</p>
+
+            </div>
+
         `;
+    });
 
-    } catch (err) {
-        console.error(err);
-        document.getElementById("grid").innerHTML =
-            "<p style='color:red'>Failed to load data</p>";
-    }
 }
 
 loadWeekly();
+
 </script>
 
 </body>

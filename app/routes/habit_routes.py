@@ -3,7 +3,6 @@ from app.utils.db import mongo
 from app.utils.auth import login_required
 from bson import ObjectId
 from datetime import datetime, date, timedelta
-
 habit_bp = Blueprint("habit", __name__)
 
 
@@ -14,11 +13,14 @@ habit_bp = Blueprint("habit", __name__)
 @login_required
 def dashboard():
 
-    user = session.get("user", {}).get("email")
+    user = session.get("user")
     today = str(date.today())
 
     habits = list(mongo.db.habits.find({"user": user}))
-    logs = list(mongo.db.logs.find({"user": user, "date": today}))
+    logs = list(mongo.db.logs.find({
+        "user": user,
+        "date": today
+    }))
 
     completed_ids = [str(log["habit_id"]) for log in logs]
 
@@ -31,56 +33,64 @@ def dashboard():
 
 
 # =========================
-# 📊 DASHBOARD API (FIXED)
+# 📊 DASHBOARD API
 # =========================
 @habit_bp.route("/api/dashboard")
 @login_required
 def dashboard_api():
-    user = session.get("user", {}).get("email")
+
+    user = session.get("user")
     today = str(date.today())
 
     habits = list(mongo.db.habits.find({"user": user}))
-    logs = list(mongo.db.logs.find({"user": user, "date": today}))
-
-    total = len(habits)
-    completed = len(logs)
+    logs = list(mongo.db.logs.find({
+        "user": user,
+        "date": today
+    }))
 
     return jsonify({
-        "total": total,
-        "completed": completed
+        "total": len(habits),
+        "completed": len(logs)
     })
 
 
 # =========================
-# ➕ CREATE HABIT (FIXED USER)
+# ➕ CREATE HABIT
 # =========================
+
 @habit_bp.route("/create", methods=["POST"])
 @login_required
 def create_habit():
-    user = session.get("user", {}).get("email")
+
+    user = session.get("user")
 
     mongo.db.habits.insert_one({
         "name": request.form["name"],
         "time": request.form["time"],
-        "user": user,  # ✅ FIXED
-        "created_at": datetime.utcnow(),
-        "weekly_data": [0]*7
+        "user": user,
+        "created_at": datetime.utcnow()
     })
 
     return redirect(url_for("habit.dashboard"))
+  
 
 
 # =========================
-# 📋 VIEW HABITS
+# 📋 HABITS PAGE
 # =========================
 @habit_bp.route("/habits")
 @login_required
 def habits():
-    user = session.get("user", {}).get("email")
+
+    user = session.get("user")
     today = str(date.today())
 
     habits = list(mongo.db.habits.find({"user": user}))
-    logs = list(mongo.db.logs.find({"user": user, "date": today}))
+
+    logs = list(mongo.db.logs.find({
+        "user": user,
+        "date": today
+    }))
 
     completed_ids = [str(log["habit_id"]) for log in logs]
 
@@ -97,18 +107,22 @@ def habits():
 @habit_bp.route("/toggle/<habit_id>", methods=["POST"])
 @login_required
 def toggle_habit(habit_id):
-    user = session.get("user", {}).get("email")
+
+    user = session.get("user")
     today = str(date.today())
 
     try:
         oid = ObjectId(habit_id)
     except:
-        return "Invalid ID", 400
+        return "Invalid habit id", 400
 
-    habit = mongo.db.habits.find_one({"_id": oid})
+    habit = mongo.db.habits.find_one({
+        "_id": oid,
+        "user": user
+    })
 
-    if not habit or habit["user"] != user:
-        return "Unauthorized", 403
+    if not habit:
+        return "Habit not found", 404
 
     existing = mongo.db.logs.find_one({
         "habit_id": oid,
@@ -135,17 +149,21 @@ def toggle_habit(habit_id):
 @habit_bp.route("/delete/<id>", methods=["POST"])
 @login_required
 def delete_habit(id):
-    user = session.get("user", {}).get("email")
+
+    user = session.get("user")
 
     try:
         oid = ObjectId(id)
     except:
-        return "Invalid ID", 400
+        return "Invalid id", 400
 
-    habit = mongo.db.habits.find_one({"_id": oid})
+    habit = mongo.db.habits.find_one({
+        "_id": oid,
+        "user": user
+    })
 
-    if not habit or habit["user"] != user:
-        return "Unauthorized", 403
+    if not habit:
+        return "Habit not found", 404
 
     mongo.db.habits.delete_one({"_id": oid})
     mongo.db.logs.delete_many({"habit_id": oid})
@@ -156,33 +174,49 @@ def delete_habit(id):
 # =========================
 # ✏️ EDIT HABIT
 # =========================
-@habit_bp.route("/edit/<id>", methods=["GET", "POST"])
+
+# =========================
+# ✏️ EDIT HABIT
+# =========================
+@habit_bp.route("/edit_habit/<habit_id>", methods=["GET", "POST"])
 @login_required
-def edit_habit(id):
-    user = session.get("user", {}).get("email")
+def edit_habit(habit_id):
+
+    user = session.get("user")
 
     try:
-        oid = ObjectId(id)
+        oid = ObjectId(habit_id)
     except:
-        return "Invalid ID", 400
+        return "Invalid habit id", 400
 
-    habit = mongo.db.habits.find_one({"_id": oid})
+    # Find habit
+    habit = mongo.db.habits.find_one({
+        "_id": oid,
+        "user": user
+    })
 
-    if not habit or habit["user"] != user:
-        return "Unauthorized", 403
+    if not habit:
+        return "Habit not found", 404
 
+    # Update habit
     if request.method == "POST":
+
         mongo.db.habits.update_one(
             {"_id": oid},
-            {"$set": {
-                "name": request.form["name"],
-                "time": request.form["time"]
-            }}
+            {
+                "$set": {
+                    "name": request.form.get("name"),
+                    "time": request.form.get("time")
+                }
+            }
         )
+
         return redirect(url_for("habit.habits"))
 
-    return render_template("edit_habit.html", habit=habit)
-
+    return render_template(
+        "edit_habit.html",
+        habit=habit
+    )
 
 # =========================
 # 📊 ANALYTICS PAGE
@@ -194,43 +228,65 @@ def analytics_page():
 
 
 # =========================
-# 📊 ANALYTICS API (IMPROVED)
+# 📊 ANALYTICS API
+# =========================
+# =========================
+# 📊 ANALYTICS API
+# =========================
+# =========================
+# 📊 ANALYTICS API
 # =========================
 @habit_bp.route("/api/analytics")
 @login_required
 def analytics_api():
-    user = session.get("user", {}).get("email")
 
-    habits = list(mongo.db.habits.find({"user": user}))
-    logs = list(mongo.db.logs.find({"user": user}))
+    user = session.get("user")
+
+    habits = list(mongo.db.habits.find({
+        "user": user
+    }))
+
+    logs = list(mongo.db.logs.find({
+        "user": user
+    }))
 
     total_habits = len(habits)
+
+    # =========================
+    # NO HABITS
+    # =========================
 
     if total_habits == 0:
         return jsonify({
             "completion_rate": 0,
             "streak": 0,
             "top_habit": None,
-            "missed_days": 0,
-            "weekly_trend": [0]*7,
+            "weekly_trend": [],
             "weekly_labels": [],
-            "habit_stats": [],
-            "heatmap": []
+            "habit_performance": [],
+            "last_30_days": [],
+            "missed_days": 0
         })
 
-    # -------------------------
-    # 🧠 PREP
-    # -------------------------
-    today = datetime.today()
+    # =========================
+    # LOG MAP
+    # =========================
+
     logs_map = {}
 
     for log in logs:
-        logs_map.setdefault(log["date"], 0)
-        logs_map[log["date"]] += 1
 
-    # -------------------------
-    # 📊 WEEKLY DATA
-    # -------------------------
+        d = log["date"]
+
+        logs_map.setdefault(d, 0)
+        logs_map[d] += 1
+
+    today = datetime.today()
+
+    # =========================
+    # WEEKLY TREND
+    # =========================
+
     start_week = today - timedelta(days=6)
 
     week_dates = [
@@ -238,97 +294,135 @@ def analytics_api():
         for i in range(7)
     ]
 
-    weekly_trend = [logs_map.get(d, 0) for d in week_dates]
+    weekly_trend = [
+        logs_map.get(d, 0)
+        for d in week_dates
+    ]
+
+    # =========================
+    # COMPLETION RATE
+    # =========================
 
     total_completed = sum(weekly_trend)
+
     total_possible = total_habits * 7
 
-    completion_rate = int((total_completed / total_possible) * 100)
+    completion_rate = 0
 
-    # -------------------------
-    # 🔥 STREAK (REAL)
-    # -------------------------
+    if total_possible > 0:
+        completion_rate = int(
+            (total_completed / total_possible) * 100
+        )
+
+    # =========================
+    # STREAK
+    # =========================
+
     streak = 0
+
     for i in range(365):
-        d = (today - timedelta(days=i)).strftime("%Y-%m-%d")
+
+        d = (
+            today - timedelta(days=i)
+        ).strftime("%Y-%m-%d")
+
         if logs_map.get(d, 0) > 0:
             streak += 1
         else:
             break
 
-    # -------------------------
-    # 🏆 TOP HABIT + HABIT STATS
-    # -------------------------
+    # =========================
+    # TOP HABIT
+    # =========================
+
     habit_counts = {}
 
     for log in logs:
-        hid = str(log["habit_id"])
-        habit_counts[hid] = habit_counts.get(hid, 0) + 1
 
-    habit_stats = []
+        hid = str(log["habit_id"])
+
+        habit_counts[hid] = (
+            habit_counts.get(hid, 0) + 1
+        )
+
+    top_habit = None
+    max_count = 0
 
     for habit in habits:
+
         hid = str(habit["_id"])
+
         count = habit_counts.get(hid, 0)
 
-        habit_stats.append({
+        if count > max_count:
+            max_count = count
+            top_habit = habit["name"]
+
+    # =========================
+    # HABIT PERFORMANCE
+    # =========================
+
+    habit_performance = []
+
+    for habit in habits:
+
+        hid = str(habit["_id"])
+
+        habit_performance.append({
             "name": habit["name"],
+            "count": habit_counts.get(hid, 0)
+        })
+
+    # =========================
+    # LAST 30 DAYS HEATMAP
+    # =========================
+
+    last_30_days = []
+
+    missed_days = 0
+
+    for i in range(29, -1, -1):
+
+        d = (
+            today - timedelta(days=i)
+        ).strftime("%Y-%m-%d")
+
+        count = logs_map.get(d, 0)
+
+        if count == 0:
+            missed_days += 1
+
+        last_30_days.append({
+            "date": d,
             "count": count
         })
 
-    habit_stats.sort(key=lambda x: x["count"], reverse=True)
+    # =========================
+    # FINAL RESPONSE
+    # =========================
 
-    top_habit = habit_stats[0]["name"] if habit_stats else None
-
-    # -------------------------
-    # ❌ MISSED DAYS (30 days)
-    # -------------------------
-    start_30 = today - timedelta(days=30)
-
-    all_days_30 = [
-        (start_30 + timedelta(days=i)).strftime("%Y-%m-%d")
-        for i in range(31)
-    ]
-
-    missed_days = sum(1 for d in all_days_30 if logs_map.get(d, 0) == 0)
-
-    # -------------------------
-    # 🟩 MINI HEATMAP (last 30 days)
-    # -------------------------
-    heatmap = []
-
-    max_count = max(logs_map.values(), default=1)
-
-    def get_intensity(count):
-        if max_count == 0:
-            return 0
-        ratio = count / max_count
-        if ratio == 0: return 0
-        elif ratio < 0.33: return 1
-        elif ratio < 0.66: return 2
-        else: return 3
-
-    for d in all_days_30:
-        c = logs_map.get(d, 0)
-        heatmap.append({
-            "date": d,
-            "count": c,
-            "intensity": get_intensity(c)
-        })
-
-    # -------------------------
-    # 🚀 RESPONSE
-    # -------------------------
     return jsonify({
+
         "completion_rate": completion_rate,
+
         "streak": streak,
+
         "top_habit": top_habit,
-        "missed_days": missed_days,
+
         "weekly_trend": weekly_trend,
+
         "weekly_labels": week_dates,
-        "habit_stats": habit_stats,
-        "heatmap": heatmap
+
+        "habit_performance": habit_performance,
+
+        "last_30_days": last_30_days,
+
+        "missed_days": missed_days
     })
+
+  
+
+
 # =========================
 # 📅 WEEKLY PAGE
 # =========================
@@ -341,16 +435,29 @@ def weekly_page():
 # =========================
 # 📅 WEEKLY API
 # =========================
+# =========================
+# 📅 WEEKLY API
+# =========================
 @habit_bp.route("/api/weekly")
 @login_required
 def weekly_api():
-    user = session.get("user", {}).get("email")
+
+    user = session.get("user")
 
     today = datetime.today()
+
+    # Week start/end
     start = today - timedelta(days=today.weekday())
     end = start + timedelta(days=6)
 
-    # Fetch only this week
+    # Get habits
+    habits = list(
+        mongo.db.habits.find({"user": user})
+    )
+
+    total_habits = len(habits)
+
+    # Get logs
     logs = list(mongo.db.logs.find({
         "user": user,
         "date": {
@@ -359,34 +466,62 @@ def weekly_api():
         }
     }))
 
-    # Initialize full week
-    days = []
+    # Daily counts
     log_map = {}
 
     for log in logs:
         log_map.setdefault(log["date"], 0)
         log_map[log["date"]] += 1
 
+    days = []
+
     for i in range(7):
-        d = (start + timedelta(days=i)).strftime("%Y-%m-%d")
-        count = log_map.get(d, 0)
+
+        d = (
+            start + timedelta(days=i)
+        ).strftime("%Y-%m-%d")
 
         days.append({
             "date": d,
-            "count": count
+            "count": log_map.get(d, 0)
         })
 
-    # 🔥 streak calculation
+    # =========================
+    # 🔥 STREAK
+    # =========================
+
     streak = 0
-    for day in reversed(days):
-        if day["count"] > 0:
+
+    for i in range(365):
+
+        d = (
+            today - timedelta(days=i)
+        ).strftime("%Y-%m-%d")
+
+        day_logs = mongo.db.logs.count_documents({
+            "user": user,
+            "date": d
+        })
+
+        if day_logs > 0:
             streak += 1
         else:
             break
 
-    # 📊 consistency
-    active_days = sum(1 for d in days if d["count"] > 0)
-    consistency = int((active_days / 7) * 100)
+    # =========================
+    # 📈 CONSISTENCY
+    # =========================
+
+    total_completed = len(logs)
+
+    total_possible = total_habits * 7
+
+    consistency = 0
+
+    if total_possible > 0:
+        consistency = int(
+            (total_completed / total_possible) * 100
+        )
 
     return jsonify({
         "week_start": start.strftime("%Y-%m-%d"),
@@ -394,22 +529,11 @@ def weekly_api():
         "days": days,
         "streak": streak,
         "consistency": consistency
-
     })
-def get_intensity(count, max_count):
-    if max_count == 0:
-        return 0
-
-    ratio = count / max_count
-
-    if ratio == 0: return 0
-    elif ratio < 0.33: return 1
-    elif ratio < 0.66: return 2
-    else: return 3
 
 # =========================
-# 🧪 TEST
+# 🧪 TEST ROUTE
 # =========================
 @habit_bp.route("/test")
 def test():
-    return "WORKING ✅"
+    return "Habit routes working ✅"
