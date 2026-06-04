@@ -1,5 +1,5 @@
 
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
@@ -27,14 +27,13 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(habit_bp)
 
+   
     @app.route("/")
     def home():
-        return "Habit Tracker App Running!"
+         return redirect(url_for("auth.login"))
+
 
     return app
-
-
-
 
 
 

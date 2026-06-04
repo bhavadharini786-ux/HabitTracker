@@ -391,7 +391,7 @@
 
                         <form
                             method="POST"
-                            action="{{ url_for('habit.delete_habit', habit_id=habit._id|string) }}"
+                            action="{{ url_for('habit.delete_habit', id=habit._id|string) }}"
                             onsubmit="return confirm('Delete this habit?')"
                         >
 

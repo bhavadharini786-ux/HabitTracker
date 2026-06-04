@@ -194,24 +194,15 @@
 
 <!-- ================= NAVBAR ================= -->
 
-<div class="navbar">
+<div class="nav">
 
-    <div class="logo">Habit Tracker</div>
-
-    <div class="nav-links">
-
-        <a href="/dashboard">Dashboard</a>
-
-        <a href="/weekly">Weekly</a>
-
-        <a href="/analytics">Analytics</a>
-
-        <a href="/logout">Logout</a>
-
-    </div>
+    <a href="{{ url_for('habit.dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('habit.habits') }}">Habits</a>
+    <a href="{{ url_for('habit.weekly_page') }}">Weekly</a>
+    <a href="{{ url_for('habit.analytics_page') }}">Analytics</a>
+    <a href="{{ url_for('auth.logout') }}">Logout</a>
 
 </div>
-
 <!-- ================= CONTENT ================= -->
 
 <div class="container">
