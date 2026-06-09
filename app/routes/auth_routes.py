@@ -46,50 +46,38 @@ def login():
 
 
 # ==========================
-# 🆕 SIGNUP
-# ==========================
 @auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
 
     if request.method == "POST":
 
-        email = request.form["email"].strip()
-        password = request.form["password"]
+        try:
+            email = request.form["email"].strip()
+            password = request.form["password"]
 
-        # ✅ Validation
-        if not email or not password:
-            flash("All fields are required")
-            return redirect(url_for("auth.signup"))
+            if not email or not password:
+                flash("All fields are required")
+                return redirect(url_for("auth.signup"))
 
-        # ✅ Email validation
-        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
-            flash("Invalid email format")
-            return redirect(url_for("auth.signup"))
+            existing_user = mongo.db.users.find_one({"email": email})
 
-        # ✅ Password validation
-        if len(password) < 6:
-            flash("Password must be at least 6 characters")
-            return redirect(url_for("auth.signup"))
+            if existing_user:
+                flash("User already exists")
+                return redirect(url_for("auth.signup"))
 
-        # ✅ Check existing user
-        existing_user = mongo.db.users.find_one({"email": email})
+            mongo.db.users.insert_one({
+                "email": email,
+                "password": generate_password_hash(password)
+            })
 
-        if existing_user:
-            flash("User already exists")
-            return redirect(url_for("auth.signup"))
+            flash("Account created successfully")
+            return redirect(url_for("auth.login"))
 
-        # ✅ Create user
-        mongo.db.users.insert_one({
-            "email": email,
-            "password": generate_password_hash(password)
-        })
-
-        flash("Account created successfully")
-        return redirect(url_for("auth.login"))
+        except Exception as e:
+            import traceback
+            return f"<pre>{traceback.format_exc()}</pre>", 500
 
     return render_template("signup.html")
-
-
 # ==========================
 # 🚪 LOGOUT
 # ==========================
