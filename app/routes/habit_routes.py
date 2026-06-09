@@ -235,27 +235,22 @@ def analytics_page():
 # =========================
 # =========================
 # 📊 ANALYTICS API
-# =========================
 @habit_bp.route("/api/analytics")
 @login_required
 def analytics_api():
 
     user = session.get("user")
 
-    habits = list(mongo.db.habits.find({
-        "user": user
-    }))
-
-    logs = list(mongo.db.logs.find({
-        "user": user
-    }))
+    habits = list(mongo.db.habits.find({"user": user}))
+    logs = list(mongo.db.logs.find({"user": user}))
 
     total_habits = len(habits)
+
+    today = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # =========================
     # NO HABITS
     # =========================
-
     if total_habits == 0:
         return jsonify({
             "completion_rate": 0,
@@ -269,24 +264,24 @@ def analytics_api():
         })
 
     # =========================
-    # LOG MAP
+    # LOG MAP (FIXED)
     # =========================
-
     logs_map = {}
 
     for log in logs:
+        raw_date = log["date"]
 
-        d = log["date"]
+        if isinstance(raw_date, str):
+            date_obj = datetime.fromisoformat(raw_date.replace("Z", ""))
+        else:
+            date_obj = raw_date
 
-        logs_map.setdefault(d, 0)
-        logs_map[d] += 1
-
-    today = datetime.today()
+        d = date_obj.strftime("%Y-%m-%d")
+        logs_map[d] = logs_map.get(d, 0) + 1
 
     # =========================
     # WEEKLY TREND
     # =========================
-
     start_week = today - timedelta(days=6)
 
     week_dates = [
@@ -294,37 +289,23 @@ def analytics_api():
         for i in range(7)
     ]
 
-    weekly_trend = [
-        logs_map.get(d, 0)
-        for d in week_dates
-    ]
+    weekly_trend = [logs_map.get(d, 0) for d in week_dates]
 
     # =========================
     # COMPLETION RATE
     # =========================
-
     total_completed = sum(weekly_trend)
-
     total_possible = total_habits * 7
 
-    completion_rate = 0
-
-    if total_possible > 0:
-        completion_rate = int(
-            (total_completed / total_possible) * 100
-        )
+    completion_rate = int((total_completed / total_possible) * 100) if total_possible else 0
 
     # =========================
     # STREAK
     # =========================
-
     streak = 0
 
     for i in range(365):
-
-        d = (
-            today - timedelta(days=i)
-        ).strftime("%Y-%m-%d")
+        d = (today - timedelta(days=i)).strftime("%Y-%m-%d")
 
         if logs_map.get(d, 0) > 0:
             streak += 1
@@ -334,24 +315,17 @@ def analytics_api():
     # =========================
     # TOP HABIT
     # =========================
-
     habit_counts = {}
 
     for log in logs:
-
         hid = str(log["habit_id"])
-
-        habit_counts[hid] = (
-            habit_counts.get(hid, 0) + 1
-        )
+        habit_counts[hid] = habit_counts.get(hid, 0) + 1
 
     top_habit = None
     max_count = 0
 
     for habit in habits:
-
         hid = str(habit["_id"])
-
         count = habit_counts.get(hid, 0)
 
         if count > max_count:
@@ -361,32 +335,22 @@ def analytics_api():
     # =========================
     # HABIT PERFORMANCE
     # =========================
-
-    habit_performance = []
-
-    for habit in habits:
-
-        hid = str(habit["_id"])
-
-        habit_performance.append({
+    habit_performance = [
+        {
             "name": habit["name"],
-            "count": habit_counts.get(hid, 0)
-        })
+            "count": habit_counts.get(str(habit["_id"]), 0)
+        }
+        for habit in habits
+    ]
 
     # =========================
-    # LAST 30 DAYS HEATMAP
+    # LAST 30 DAYS
     # =========================
-
     last_30_days = []
-
     missed_days = 0
 
     for i in range(29, -1, -1):
-
-        d = (
-            today - timedelta(days=i)
-        ).strftime("%Y-%m-%d")
-
+        d = (today - timedelta(days=i)).strftime("%Y-%m-%d")
         count = logs_map.get(d, 0)
 
         if count == 0:
@@ -398,30 +362,18 @@ def analytics_api():
         })
 
     # =========================
-    # FINAL RESPONSE
+    # RESPONSE
     # =========================
-
     return jsonify({
-
         "completion_rate": completion_rate,
-
         "streak": streak,
-
         "top_habit": top_habit,
-
         "weekly_trend": weekly_trend,
-
         "weekly_labels": week_dates,
-
         "habit_performance": habit_performance,
-
         "last_30_days": last_30_days,
-
         "missed_days": missed_days
     })
-
-  
-
 
 # =========================
 # 📅 WEEKLY PAGE
