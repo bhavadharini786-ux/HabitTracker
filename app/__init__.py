@@ -34,7 +34,12 @@ def create_app():
 
 
     return app
+@app.route("/dbtest")
+def dbtest():
+    from app.utils.db import mongo
 
+    mongo.db.users.find_one({})
+    return "MongoDB Connected!"
 
 
 
