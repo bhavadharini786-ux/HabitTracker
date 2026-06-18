@@ -12,7 +12,7 @@ def create_app():
     # =========================
     app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "supersecretkey")
     app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "jwtsecretkey")
-    app.config["MONGO_URI"] = os.getenv("MONGO_URI", "mongodb://localhost:27017/habitflow")
+    app.config["MONGO_URI"] = os.getenv("MONGO_URI", "mongodb://localhost:27017/habittracker")
 
     # =========================
     # 🔧 Extensions
