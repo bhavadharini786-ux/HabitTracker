@@ -3,284 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Edit Habit</title>
-
     <style>
-
-        *{
-            margin:0;
-            padding:0;
-            box-sizing:border-box;
-        }
-
-        body{
-            font-family: Arial, sans-serif;
-            background:#0d1117;
-            color:#e6edf3;
-        }
-
-        /* ================= NAVBAR ================= */
-
-        .navbar{
-            width:100%;
-            background:#161b22;
-            border-bottom:1px solid #30363d;
-            padding:15px 40px;
-
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
-
-        .logo{
-            font-size:22px;
-            font-weight:bold;
-            color:#58a6ff;
-        }
-
-        .nav-links{
-            display:flex;
-            gap:15px;
-        }
-
-        .nav-links a{
-            text-decoration:none;
-            color:#e6edf3;
-            padding:10px 15px;
-            border-radius:8px;
-            transition:0.3s;
-        }
-
-        .nav-links a:hover{
-            background:#21262d;
-        }
-
-        .logout{
-            background:#da3633;
-        }
-
-        .logout:hover{
-            background:#f85149;
-        }
-
-        /* ================= CONTAINER ================= */
-
-        .container{
-            max-width:600px;
-            margin:60px auto;
-            padding:30px;
-        }
-
-        .card{
-            background:#161b22;
-            border:1px solid #30363d;
-            border-radius:18px;
-            padding:35px;
-
-            box-shadow:0 0 20px rgba(0,0,0,0.4);
-        }
-
-        .title{
-            text-align:center;
-            margin-bottom:30px;
-        }
-
-        .title h1{
-            font-size:32px;
-            margin-bottom:10px;
-        }
-
-        .title p{
-            color:#8b949e;
-        }
-
-        /* ================= FORM ================= */
-
-        .form-group{
-            margin-bottom:22px;
-        }
-
-        label{
-            display:block;
-            margin-bottom:8px;
-            font-weight:bold;
-            color:#c9d1d9;
-        }
-
-        input{
-            width:100%;
-            padding:14px;
-            border:none;
-            outline:none;
-            border-radius:10px;
-
-            background:#0d1117;
-            border:1px solid #30363d;
-            color:white;
-
-            font-size:16px;
-        }
-
-        input:focus{
-            border:1px solid #58a6ff;
-            box-shadow:0 0 10px rgba(88,166,255,0.3);
-        }
-
-        /* ================= BUTTONS ================= */
-
-        .button-group{
-            display:flex;
-            gap:15px;
-            margin-top:25px;
-        }
-
-        .save-btn{
-            flex:1;
-            padding:14px;
-            background:#238636;
-            color:white;
-            border:none;
-            border-radius:10px;
-            font-size:16px;
-            cursor:pointer;
-            transition:0.3s;
-            font-weight:bold;
-        }
-
-        .save-btn:hover{
-            background:#2ea043;
-            transform:translateY(-2px);
-        }
-
-        .cancel-btn{
-            flex:1;
-            padding:14px;
-            background:#30363d;
-            color:white;
-            text-decoration:none;
-            border-radius:10px;
-            text-align:center;
-            transition:0.3s;
-            font-weight:bold;
-        }
-
-        .cancel-btn:hover{
-            background:#484f58;
-        }
-
-        /* ================= MOBILE ================= */
-
-        @media(max-width:700px){
-
-            .navbar{
-                flex-direction:column;
-                gap:15px;
-            }
-
-            .nav-links{
-                flex-wrap:wrap;
-                justify-content:center;
-            }
-
-            .container{
-                padding:20px;
-            }
-
-            .button-group{
-                flex-direction:column;
-            }
-        }
-
+        body{font-family:Arial,sans-serif;background:#0d1117;color:#e6edf3;}
+        .navbar{width:100%;background:#161b22;border-bottom:1px solid #30363d;padding:15px 40px;display:flex;justify-content:space-between;align-items:center;}
+        .logo{font-size:22px;font-weight:bold;color:#58a6ff;}
+        .nav-links{display:flex;gap:15px;}
+        .nav-links a{text-decoration:none;color:#e6edf3;padding:10px 15px;border-radius:8px;transition:0.3s;}
+        .nav-links a:hover{background:#21262d;}
+        .logout{background:#da3633;}
+        .logout:hover{background:#f85149;}
+        .container{max-width:600px;margin:60px auto;padding:30px;}
+        .card{background:#161b22;border:1px solid #30363d;border-radius:18px;padding:35px;box-shadow:0 0 20px rgba(0,0,0,0.4);}
+        .title{text-align:center;margin-bottom:30px;}
+        .title h1{font-size:32px;margin-bottom:10px;}
+        .title p{color:#8b949e;}
+        .form-group{margin-bottom:22px;}
+        label{display:block;margin-bottom:8px;font-weight:bold;color:#c9d1d9;}
+        input{width:100%;padding:14px;border:none;outline:none;border-radius:10px;background:#0d1117;border:1px solid #30363d;color:white;font-size:16px;}
+        input:focus{border:1px solid #58a6ff;box-shadow:0 0 10px rgba(88,166,255,0.3);}
+        .button-group{display:flex;gap:15px;margin-top:25px;}
+        .save-btn{flex:1;padding:14px;background:#238636;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer;transition:0.3s;font-weight:bold;}
+        .save-btn:hover{background:#2ea043;transform:translateY(-2px);}
+        .cancel-btn{flex:1;padding:14px;background:#30363d;color:white;text-decoration:none;border-radius:10px;text-align:center;transition:0.3s;font-weight:bold;}
+        .cancel-btn:hover{background:#484f58;}
+        @media(max-width:700px){.navbar{flex-direction:column;gap:15px}.nav-links{flex-wrap:wrap;justify-content:center}.container{padding:20px}.button-group{flex-direction:column}}
     </style>
 </head>
-
 <body>
-
-    <!-- ================= NAVBAR ================= -->
-
     <div class="navbar">
-
-        <div class="logo">
-            Habit Tracker
-        </div>
-
+        <div class="logo">Habit Tracker</div>
         <div class="nav-links">
-
             <a href="/dashboard">Dashboard</a>
-
             <a href="/weekly">Weekly</a>
-
             <a href="/analytics">Analytics</a>
-
             <a href="/habits">Habits</a>
-
             <a href="/logout" class="logout">Logout</a>
-
         </div>
-
     </div>
-
-    <!-- ================= EDIT FORM ================= -->
-
     <div class="container">
-
         <div class="card">
-
             <div class="title">
-
                 <h1>✏️ Edit Habit</h1>
-
                 <p>Update your habit details</p>
-
             </div>
-
-            <form method="POST">
-
+            <form id="editHabitForm" method="POST">
                 <div class="form-group">
-
                     <label>Habit Name</label>
-
-                    <input
-                        type="text"
-                        name="name"
-                        value="{{ habit.name }}"
-                        required
-                    >
-
+                    <input type="text" name="name" value="{{ habit.name }}" required>
                 </div>
-
                 <div class="form-group">
-
                     <label>Habit Time</label>
-
-                    <input
-                        type="text"
-                        name="time"
-                        value="{{ habit.time }}"
-                        required
-                    >
-
+                      <input type="time" name="time" value="{{ habit.time }}" step="1" required>
                 </div>
 
                 <div class="button-group">
-
-                    <button type="submit" class="save-btn">
-                        Save Changes
-                    </button>
-
-                    <a href="/habits" class="cancel-btn">
-                        Cancel
-                    </a>
-
+                    <button type="submit" class="save-btn">Save Changes</button>
+                    <a href="/habits" class="cancel-btn">Cancel</a>
                 </div>
-
             </form>
-
         </div>
-
     </div>
 
+    <script>
+    document.getElementById("editHabitForm").addEventListener("submit", async e => {
+        e.preventDefault();
+        const form = new FormData(e.target);
+        const habitId = "{{ habit._id }}";   // Flask injects habit ID
+        await fetch("/api/habit/edit/" + habitId, {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") },
+            body: form
+        });
+        // Redirect back to habits list after saving
+        window.location.href = "/habits";
+    });
+    </script>
 </body>
 </html>
+
 

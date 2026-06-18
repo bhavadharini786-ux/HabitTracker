@@ -1,32 +1,57 @@
 from datetime import date
-from app.repositories import log_repo, habit_repo
+from app.repositories import habit_repo
+from app.utils.db import mongo
+from bson import ObjectId
 
 
-# =========================
-# 🔁 TOGGLE HABIT LOGIC
-# =========================
+SUGGESTED_HABITS = [
+    "Drink Water",
+    "Exercise",
+    "Meditation",
+    "Read Book",
+    "Walk 5000 Steps",
+    "Healthy Diet",
+    "Coding Practice",
+    "Sleep Early"
+]
+
+
+def get_suggestions():
+    return SUGGESTED_HABITS
+
+
+def create_habit(user, name, time):
+
+    return habit_repo.create_habit(
+        user,
+        name,
+        time
+    )
+
+
 def toggle_habit(user, habit_id):
 
-    # 1. Validate habit
-    habit = habit_repo.get_habit_by_id(habit_id)
+    today = str(date.today())
 
-    if not habit:
-        return {"error": "Habit not found"}, 404
+    existing = mongo.db.logs.find_one({
+        "habit_id": ObjectId(habit_id),
+        "user": user,
+        "date": today
+    })
 
-    # 2. Ownership check
-    if habit.get("user") != user:
-        return {"error": "Unauthorized"}, 403
+    if existing:
 
-    today = date.today().isoformat()
+        mongo.db.logs.delete_one({
+            "_id": existing["_id"]
+        })
 
-    # 3. Toggle log
-    try:
-        toggled = log_repo.toggle_log(user, habit_id, today)
-    except Exception as e:
-        return {"error": "Toggle failed", "details": str(e)}, 500
+        return False
 
-    # 4. Response
-    return {
-        "success": True,
-        "status": "completed" if toggled else "removed"
-    }
+    mongo.db.logs.insert_one({
+        "habit_id": ObjectId(habit_id),
+        "user": user,
+        "date": today,
+        "completed": True
+    })
+
+    return True

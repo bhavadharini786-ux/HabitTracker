@@ -1,91 +1,96 @@
-from flask import Blueprint, render_template, request, redirect, session, url_for, flash
+from flask import Blueprint, request, jsonify, redirect, url_for, flash, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.utils.db import mongo
-import re
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from bson import ObjectId
 
-auth_bp = Blueprint("auth", __name__)
+auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
-# ==========================
-# 🔐 LOGIN
-# ==========================
-@auth_bp.route("/login", methods=["GET", "POST"])
-def login():
+# -------------------------
+# Signup Page (GET)
+# -------------------------
+@auth_bp.route("/signup", methods=["GET"])
+def signup_page():
+    return render_template("signup.html")
 
-    # If already logged in
-    if "user" in session:
-        return redirect(url_for("habit.dashboard"))
+# -------------------------
+# Signup Route (POST)
+# -------------------------
+@auth_bp.route("/signup", methods=["POST"])
+def signup():
+    username = request.form.get("username")
+    email = request.form.get("email")
+    password = request.form.get("password")
 
-    if request.method == "POST":
+    if not username or not email or not password:
+        flash("Missing required fields")
+        return redirect(url_for("auth.signup_page"))
 
-        email = request.form["email"].strip()
-        password = request.form["password"]
+    existing_user = mongo.db.users.find_one({"email": email})
+    if existing_user:
+        flash("User already exists")
+        return redirect(url_for("auth.signup_page"))
 
-        # ✅ Validation
-        if not email or not password:
-            flash("All fields are required")
-            return redirect(url_for("auth.login"))
+    hashed_pw = generate_password_hash(password)
+    mongo.db.users.insert_one({
+        "username": username,
+        "email": email,
+        "password": hashed_pw
+    })
 
-        # ✅ Find user
-        user = mongo.db.users.find_one({"email": email})
+    flash("Signup successful! Please login.")
+    return redirect(url_for("auth.login_page"))
 
-        # ✅ Check password
-        if user and check_password_hash(user["password"], password):
-
-            session.clear()
-            session["user"] = {
-                "email": email
-            }
-
-            flash("Login successful")
-            return redirect(url_for("habit.dashboard"))
-
-        flash("Invalid email or password")
-        return redirect(url_for("auth.login"))
-
+# -------------------------
+# Login Page (GET)
+# -------------------------
+@auth_bp.route("/login", methods=["GET"])
+def login_page():
     return render_template("login.html")
 
+# -------------------------
+# Login Route (POST)
+# -------------------------
+@auth_bp.route("/login", methods=["POST"])
+def login():
+    email = request.form.get("email")
+    password = request.form.get("password")
 
-# ==========================
-@auth_bp.route("/signup", methods=["GET", "POST"])
-def signup():
+    if not email or not password:
+        flash("Missing required fields")
+        return redirect(url_for("auth.login_page"))
 
-    if request.method == "POST":
+    user = mongo.db.users.find_one({"email": email})
+    if not user or not check_password_hash(user["password"], password):
+        flash("Invalid credentials")
+        return redirect(url_for("auth.login_page"))
 
-        try:
-            email = request.form["email"].strip()
-            password = request.form["password"]
+    # Issue JWT token
+    access_token = create_access_token(identity=str(user["_id"]))
 
-            if not email or not password:
-                flash("All fields are required")
-                return redirect(url_for("auth.signup"))
+    # Check if user has any habits
+    has_habits = mongo.db.habits.count_documents({"user": str(user["_id"])}) > 0
 
-            existing_user = mongo.db.users.find_one({"email": email})
+    return jsonify({
+        "message": "Login successful",
+        "access_token": access_token,
+        "new_user": not has_habits
+    })
 
-            if existing_user:
-                flash("User already exists")
-                return redirect(url_for("auth.signup"))
 
-            mongo.db.users.insert_one({
-                "email": email,
-                "password": generate_password_hash(password)
-            })
+# -------------------------
+# Protected Profile Route
+# -------------------------
+@auth_bp.route("/profile", methods=["GET"])
+@jwt_required()
+def profile():
+    current_user_id = get_jwt_identity()
+    user = mongo.db.users.find_one({"_id": ObjectId(current_user_id)})
+    if not user:
+        return jsonify({"error": "User not found"}), 404
 
-            flash("Account created successfully")
-            return redirect(url_for("auth.login"))
+    return jsonify({
+        "username": user["username"],
+        "email": user["email"]
+    })
 
-        except Exception as e:
-            import traceback
-            return f"<pre>{traceback.format_exc()}</pre>", 500
-
-    return render_template("signup.html")
-# ==========================
-# 🚪 LOGOUT
-# ==========================
-@auth_bp.route("/logout")
-def logout():
-
-    session.clear()
-
-    flash("Logged out successfully")
-
-    return redirect(url_for("auth.login"))
