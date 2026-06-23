@@ -1,5 +1,25 @@
+# Python
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
+# Node / Next.js (if frontend present)
 node_modules/
 .next/
+dist/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Render/Deployment
+.env
