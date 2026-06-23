@@ -74,7 +74,31 @@ async function loadDashboard(){
           backgroundColor:'#58a6ff'
         }]
       },
-      options:{scales:{y:{beginAtZero:true}}}
+      options:{
+        responsive:true,
+        plugins:{
+          title:{
+            display:true,
+            text:"Daily Habit Completion", // ✅ Graph title
+            color:"white",
+            font:{size:18}
+          },
+          legend:{labels:{color:"white"}}
+        },
+        scales:{
+          x:{
+            title:{display:true,text:"Day of the Week",color:"white"}, // ✅ X-axis label
+            ticks:{color:"white"},
+            grid:{color:"#30363d"}
+          },
+          y:{
+            title:{display:true,text:"Habits Completed",color:"white"}, // ✅ Y-axis label
+            beginAtZero:true,
+            ticks:{color:"white",stepSize:1}, // increments of 1
+            grid:{color:"#30363d"}
+          }
+        }
+      }
     });
   } catch(err){
     document.querySelector(".container").innerHTML="<p style='color:red;text-align:center;'>Error loading dashboard. Please login again.</p>";
@@ -85,3 +109,4 @@ loadDashboard();
 </script>
 </body>
 </html>
+

@@ -1,10 +1,9 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from bson import ObjectId
 from datetime import datetime, date, timedelta
 import calendar
 from app.utils.db import mongo
-from flask import render_template
 
 habit_bp = Blueprint("habit", __name__)
 
@@ -17,7 +16,7 @@ def dashboard_api():
     user = get_jwt_identity()
     today = datetime.utcnow().date().isoformat()
 
-    habits = list(mongo.db.habits.find({"user": user}))
+    habits = list(mongo.db.habits.find({"user": user}).sort("order_index", 1))
     logs_today = list(mongo.db.logs.find({"user": user, "date": today}))
 
     total = len(habits)
@@ -25,6 +24,7 @@ def dashboard_api():
     remaining = total - completed
     completion_percent = int((completed / total) * 100) if total > 0 else 0
 
+    # streak calculation
     streak = 0
     for i in range(365):
         d = (datetime.utcnow().date() - timedelta(days=i)).isoformat()
@@ -43,7 +43,6 @@ def dashboard_api():
         "timestamp": datetime.utcnow().isoformat(timespec="seconds")
     })
 
-
 # -------------------------
 # ➕ CREATE HABIT
 # -------------------------
@@ -51,8 +50,9 @@ def dashboard_api():
 @jwt_required()
 def create_habit():
     user = get_jwt_identity()
-    name = request.form.get("name") or (request.json or {}).get("name")
-    time_str = request.form.get("time") or (request.json or {}).get("time")
+    data = request.get_json() or {}
+    name = data.get("name")
+    time_str = data.get("time")
 
     if not name or not time_str:
         return jsonify({"error": "Missing fields"}), 400
@@ -62,79 +62,58 @@ def create_habit():
     except ValueError:
         return jsonify({"error": "Invalid time format, use HH:MM:SS"}), 400
 
-    mongo.db.habits.insert_one({
+    habit = {
         "user": user,
         "name": name,
-        "time": habit_time.isoformat(),
+        "time": habit_time.strftime("%H:%M:%S"),
         "created_at": datetime.utcnow().isoformat(timespec="seconds"),
         "streak": 0,
         "last_completed": None,
-        "active": True
-    })
-    return jsonify({"message": "Habit created"}), 201
-
-
-# -------------------------
-# ✏️ EDIT HABIT
-from flask import render_template
+        "active": True,
+        "order_index": mongo.db.habits.count_documents({"user": user})
+    }
+    mongo.db.habits.insert_one(habit)
+    return jsonify({"message": "Habit created", "habit": habit}), 201
 
 # -------------------------
-# ✏️ Render Edit Habit Page (GET)
+# 🔄 TOGGLE / UPDATE HABIT
 # -------------------------
-@habit_bp.route("/habit/edit/<habit_id>", methods=["GET"])
-def edit_habit_page(habit_id):
-    try:
-        oid = ObjectId(habit_id)
-    except:
-        return "Invalid habit id", 400
-
-    habit = mongo.db.habits.find_one({"_id": oid})
-    if not habit:
-        return "Habit not found", 404
-
-    # ✅ Convert ObjectId to string for template use
-    habit["_id"] = str(habit["_id"])
-
-    if "time" in habit and habit["time"]:
-        try:
-            habit["time"] = datetime.strptime(habit["time"], "%H:%M:%S").strftime("%H:%M:%S")
-        except:
-            habit["time"] = str(habit["time"])
-
-    return render_template("edit_habit.html", habit=habit)
-
-
-# -------------------------
-# 💾 Save Edited Habit (POST)
-# -------------------------
-@habit_bp.route("/api/habit/edit/<habit_id>", methods=["POST"])
+@habit_bp.route("/api/habit/update/<habit_id>", methods=["PUT"])
 @jwt_required()
-def edit_habit(habit_id):
+def update_habit(habit_id):
     user = get_jwt_identity()
     try:
         oid = ObjectId(habit_id)
     except:
         return jsonify({"error": "Invalid habit id"}), 400
 
-    data = request.form or request.json
-    update_fields = {}
+    habit = mongo.db.habits.find_one({"_id": oid, "user": user})
+    if not habit:
+        return jsonify({"error": "Habit not found"}), 404
 
-    if "name" in data:
-        update_fields["name"] = data["name"]
+    today = datetime.utcnow().date().isoformat()
+    log = mongo.db.logs.find_one({"user": user, "habit_id": oid, "date": today})
 
-    if "time" in data:
-        try:
-            # Normalize to HH:MM:SS
-            habit_time = datetime.strptime(data["time"], "%H:%M:%S").time()
-            update_fields["time"] = habit_time.strftime("%H:%M:%S")
-        except ValueError:
-            return jsonify({"error": "Invalid time format, must be HH:MM:SS"}), 400
+    if log:
+        # Undo completion
+        mongo.db.logs.delete_one({"_id": log["_id"]})
+        return jsonify({"completed": False, "streak": habit.get("streak", 0), "last_completed": None})
+    else:
+        # Mark complete
+        now = datetime.utcnow().isoformat(timespec="seconds")
+        mongo.db.logs.insert_one({
+            "habit_id": oid,
+            "user": user,
+            "date": today,
+            "completed": True,
+            "timestamp": now
+        })
+        streak = habit.get("streak", 0) + 1
+        mongo.db.habits.update_one({"_id": oid}, {"$set": {"streak": streak, "last_completed": now}})
+        return jsonify({"completed": True, "streak": streak, "last_completed": now})
 
-    mongo.db.habits.update_one({"_id": oid, "user": user}, {"$set": update_fields})
-    return jsonify({"message": "Habit updated"})
-
-
-# 🔁 COMPLETE HABIT
+# -------------------------
+# 🔁 COMPLETE HABIT (explicit endpoint)
 # -------------------------
 @habit_bp.route("/api/habit/complete/<habit_id>", methods=["POST"])
 @jwt_required()
@@ -152,20 +131,6 @@ def complete_habit(habit_id):
     mongo.db.habits.update_one({"_id": oid, "user": user}, {"$inc": {"streak": 1}})
     return jsonify({"message": "Habit marked complete", "timestamp": now})
 
-
-# -------------------------
-# ❌ DELETE HABIT
-# -------------------------
-@habit_bp.route("/api/habit/delete/<habit_id>", methods=["POST"])
-@jwt_required()
-def delete_habit(habit_id):
-    user = get_jwt_identity()
-    oid = ObjectId(habit_id)
-    mongo.db.habits.delete_one({"_id": oid, "user": user})
-    mongo.db.logs.delete_many({"habit_id": oid, "user": user})
-    return jsonify({"message": "Habit deleted"})
-
-
 # -------------------------
 # 📅 TODAY HABITS
 # -------------------------
@@ -174,8 +139,8 @@ def delete_habit(habit_id):
 def today_habits():
     user = get_jwt_identity()
     today = datetime.utcnow().date().isoformat()
+    habits = list(mongo.db.habits.find({"user": user}).sort("order_index", 1))
 
-    habits = list(mongo.db.habits.find({"user": user}))
     logs = list(mongo.db.logs.find({"user": user, "date": today}))
     completed = {str(l["habit_id"]) for l in logs}
 
@@ -189,10 +154,66 @@ def today_habits():
         for h in habits
     ])
 
+# -------------------------
+# ❌ DELETE HABIT
+# -------------------------
+@habit_bp.route("/api/habit/delete/<habit_id>", methods=["DELETE"])
+@jwt_required()
+def delete_habit(habit_id):
+    user = get_jwt_identity()
+    oid = ObjectId(habit_id)
+    mongo.db.habits.delete_one({"_id": oid, "user": user})
+    mongo.db.logs.delete_many({"habit_id": oid, "user": user})
+    return jsonify({"message": "Habit deleted"})
 
 # -------------------------
-# 📊 WEEKLY API
+# ✏️ EDIT HABIT
 # -------------------------
+@habit_bp.route("/habit/edit/<habit_id>", methods=["GET"])
+def edit_habit_page(habit_id):
+    try:
+        oid = ObjectId(habit_id)
+    except:
+        return "Invalid habit id", 400
+
+    habit = mongo.db.habits.find_one({"_id": oid})
+    if not habit:
+        return "Habit not found", 404
+
+    habit["_id"] = str(habit["_id"])
+    if "time" in habit and habit["time"]:
+        try:
+            habit["time"] = datetime.strptime(habit["time"], "%H:%M:%S").strftime("%H:%M:%S")
+        except:
+            habit["time"] = str(habit["time"])
+
+    return render_template("edit_habit.html", habit=habit)
+
+@habit_bp.route("/api/habit/edit/<habit_id>", methods=["POST"])
+@jwt_required()
+def edit_habit(habit_id):
+    user = get_jwt_identity()
+    try:
+        oid = ObjectId(habit_id)
+    except:
+        return jsonify({"error": "Invalid habit id"}), 400
+
+    data = request.get_json() or {}
+    update_fields = {}
+
+    if "name" in data:
+        update_fields["name"] = data["name"]
+
+    if "time" in data:
+        try:
+            habit_time = datetime.strptime(data["time"], "%H:%M:%S").time()
+            update_fields["time"] = habit_time.strftime("%H:%M:%S")
+        except ValueError:
+            return jsonify({"error": "Invalid time format, must be HH:MM:SS"}), 400
+
+    mongo.db.habits.update_one({"_id": oid, "user": user}, {"$set": update_fields})
+    return jsonify({"message": "Habit updated"})
+
 # -------------------------
 # 📊 WEEKLY API
 # -------------------------
@@ -206,8 +227,8 @@ def weekly_api():
     start = today - timedelta(days=today.weekday())
     end = start + timedelta(days=6)
 
-    # Habits for this user
-    habits = list(mongo.db.habits.find({"user": user}))
+    # ✅ Sorted by order_index
+    habits = list(mongo.db.habits.find({"user": user}).sort("order_index", 1))
     total_habits = len(habits)
 
     # Logs for this week
@@ -244,14 +265,25 @@ def weekly_api():
     total_possible = total_habits * 7
     consistency = int((total_completed / total_possible) * 100) if total_possible else 0
 
+    # ✅ Habit performance stats
+    habit_counts = {}
+    for log in logs:
+        hid = str(log["habit_id"])
+        habit_counts[hid] = habit_counts.get(hid, 0) + 1
+
+    habit_stats = [
+        {"name": h["name"], "count": habit_counts.get(str(h["_id"]), 0)}
+        for h in habits
+    ]
+
     return jsonify({
         "week_start": start.isoformat() + "T00:00:00",
         "week_end": end.isoformat() + "T00:00:00",
         "days": days,
         "streak": streak,
-        "consistency": consistency
+        "consistency": consistency,
+        "habit_stats": habit_stats
     })
-
 
 # -------------------------
 # 
@@ -288,6 +320,7 @@ def monthly_api():
 
     completion_rate = int((sum(1 for day in days if day["count"] > 0) / num_days) * 100)
 
+    # ✅ streak calculation should finish before returning
     streak = 0
     for i in range(365):
         d = (today - timedelta(days=i)).isoformat()
@@ -295,7 +328,8 @@ def monthly_api():
             streak += 1
         else:
             break
-        return jsonify({
+
+    return jsonify({
         "month_name": date(target_year, target_month, 1).strftime("%B %Y"),
         "days": days,
         "total_completions": total_completions,
@@ -304,7 +338,7 @@ def monthly_api():
         "missed_days": missed_days,
         "timestamp": datetime.utcnow().isoformat(timespec="seconds")
     })
-    
+
     
     
     

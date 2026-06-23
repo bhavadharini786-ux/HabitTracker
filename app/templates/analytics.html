@@ -79,7 +79,7 @@ async function loadAnalytics(){
     document.getElementById("topHabit").innerText = data.top_habit || "-";
     document.getElementById("missedDays").innerText = data.missed_days;
 
-    // Weekly Chart
+    // Weekly Progress Chart
     new Chart(document.getElementById("weeklyChart"), {
       type: "line",
       data: {
@@ -93,10 +93,26 @@ async function loadAnalytics(){
           fill:true
         }]
       },
-      options:{responsive:true,plugins:{legend:{labels:{color:"white"}}},scales:{x:{ticks:{color:"white"},grid:{color:"#30363d"}},y:{ticks:{color:"white"},grid:{color:"#30363d"}}}}
+      options:{
+        responsive:true,
+        plugins:{legend:{labels:{color:"white"}}},
+        scales:{
+          x:{
+            title:{display:true,text:"Day of the Week",color:"white"},
+            ticks:{color:"white"},
+            grid:{color:"#30363d"}
+          },
+          y:{
+            title:{display:true,text:"Habits Completed",color:"white"},
+            beginAtZero:true,
+            ticks:{color:"white",stepSize:1},
+            grid:{color:"#30363d"}
+          }
+        }
+      }
     });
 
-    // Habit Chart
+    // Habit Performance Chart
     new Chart(document.getElementById("habitChart"), {
       type: "bar",
       data: {
@@ -107,7 +123,23 @@ async function loadAnalytics(){
           backgroundColor:["#58a6ff","#2ea043","#db6d28","#8957e5","#f85149"]
         }]
       },
-      options:{responsive:true,plugins:{legend:{labels:{color:"white"}}},scales:{x:{ticks:{color:"white"},grid:{color:"#30363d"}},y:{ticks:{color:"white"},grid:{color:"#30363d"}}}}
+      options:{
+        responsive:true,
+        plugins:{legend:{labels:{color:"white"}}},
+        scales:{
+          x:{
+            title:{display:true,text:"Habit Name",color:"white"},
+            ticks:{color:"white"},
+            grid:{color:"#30363d"}
+          },
+          y:{
+            title:{display:true,text:"Completion Count",color:"white"},
+            beginAtZero:true,
+            ticks:{color:"white",stepSize:1},
+            grid:{color:"#30363d"}
+          }
+        }
+      }
     });
 
     // Heatmap

@@ -89,10 +89,16 @@
         <div class="card"><h2 id="total">0</h2><p>✅ Weekly Completions</p></div>
     </div>
 
-    <!-- GRAPH -->
+    <!-- GRAPH 1 -->
     <div class="chart-box">
-        <h2>📈 Weekly Performance Graph</h2>
+        <h2>📈 Weekly Progress</h2>
         <canvas id="weeklyChart"></canvas>
+    </div>
+
+    <!-- GRAPH 2 -->
+    <div class="chart-box">
+        <h2>📊 Habit Performance</h2>
+        <canvas id="habitPerformanceChart"></canvas>
     </div>
 
     <!-- HEATMAP -->
@@ -109,29 +115,22 @@
 async function loadWeekly(){
     try {
         const response = await fetch("/api/weekly", {
-            headers: {
-                "Authorization": "Bearer " + localStorage.getItem("access_token")
-            }
+            headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") }
         });
-
         if (!response.ok) throw new Error("Failed to load weekly data");
-
         const data = await response.json();
 
         // Stats
         document.getElementById("streak").innerText = data.streak || 0;
         document.getElementById("consistency").innerText = (data.consistency || 0) + "%";
-
         let total = 0;
         data.days.forEach(day => total += day.count);
         document.getElementById("total").innerText = total;
 
-        // Chart
+        // Weekly Progress Chart
         const labels = data.days.map(day => day.date);
         const values = data.days.map(day => day.count);
-        const ctx = document.getElementById("weeklyChart");
-
-        new Chart(ctx, {
+        new Chart(document.getElementById("weeklyChart"), {
             type: 'line',
             data: {
                 labels: labels,
@@ -146,35 +145,75 @@ async function loadWeekly(){
                 }]
             },
             options: {
-                responsive:true,
-                plugins:{legend:{labels:{color:'white'}}},
-                scales:{
-                    x:{ticks:{color:'white'},grid:{color:'#30363d'}},
-                    y:{beginAtZero:true,ticks:{color:'white'},grid:{color:'#30363d'}}
-                }
-            }
+  responsive: true,
+  plugins: { legend: { labels: { color: 'white' } } },
+  scales: {
+    x: {
+      title: { display: true, text: "Day of the Week", color: "white" },
+      ticks: { color: 'white' },
+      grid: { color: '#30363d' }
+    },
+    y: {
+      title: { display: true, text: "Habits Completed", color: "white" },
+      beginAtZero: true,
+      ticks: { color: 'white', stepSize: 1 },   // ✅ increments of 1
+      grid: { color: '#30363d' }
+    }
+  }
+}
+
+ 
+         }  );
+
+        // Habit Performance Chart (dummy example, replace with /api/analytics data)
+        const habitNames = ["Drink Water","Exercise","Meditation","Read Book"];
+        const habitCounts = [5,3,4,2];
+        new Chart(document.getElementById("habitPerformanceChart"), {
+            type: 'bar',
+            data: {
+                labels: habitNames,
+                datasets: [{
+                    label: 'Completion Count',
+                    data: habitCounts,
+                    backgroundColor: '#58a6ff'
+                }]
+            },
+           options: {
+  responsive: true,
+  plugins: { legend: { labels: { color: 'white' } } },
+  scales: {
+    x: {
+      title: { display: true, text: "Habit Name", color: "white" },
+      ticks: { color: 'white' },
+      grid: { color: '#30363d' }
+    },
+    y: {
+      title: { display: true, text: "Completion Count", color: "white" },
+      beginAtZero: true,
+      ticks: { color: 'white', stepSize: 1 },   // ✅ increments of 1
+      grid: { color: '#30363d' }
+    }
+  }
+}
+
         });
 
         // Heatmap
         const grid = document.getElementById("weekGrid");
         grid.innerHTML = "";
         const today = new Date().toISOString().split("T")[0];
-
         data.days.forEach(day => {
             let level = "none";
             if(day.count >= 1 && day.count <= 2) level = "low";
             else if(day.count >= 3 && day.count <= 5) level = "medium";
             else if(day.count > 5) level = "high";
-
             const highlight = day.date === today ? "today-highlight" : "";
-
             grid.innerHTML += `
                 <div class="day-box ${level} ${highlight}">
                     <h3>${day.date}</h3>
                     <div class="count">${day.count}</div>
                     <p>Habits Done</p>
-                </div>
-            `;
+                </div>`;
         });
 
     } catch (err) {
@@ -183,6 +222,8 @@ async function loadWeekly(){
         console.error(err);
     }
 }
-
 loadWeekly();
 </script>
+</body>
+</html>
+

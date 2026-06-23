@@ -43,12 +43,17 @@
 <body>
 
   <!-- 🔝 Navbar (same on all pages) -->
-  <nav>
-    <a href="dashboard.html" id="dashboardLink">Dashboard</a>
-    <a href="habits.html" id="habitsLink">Habits</a>
-    <a href="profile.html" id="profileLink">Profile</a>
-  </nav>
-
+  <div class="navbar">
+  <div class="logo">HabitFlow</div>
+  <div class="nav-links">
+    <a href="/dashboard">Dashboard</a>
+    <a href="/habits">Habits</a>
+    <a href="/weekly">Weekly</a>
+    <a href="/analytics">Analytics</a>
+    <a href="/monthly">Monthly</a>
+    <a href="/logout">Logout</a>
+  </div>
+</div>
   <!-- 📄 Page Content -->
   <div class="container">
     <h1>Welcome to Habit Tracker</h1>
@@ -57,17 +62,22 @@
 
   <!-- 🧠 Script to highlight active page -->
   <script>
+    // Highlight active nav link
     const path = window.location.pathname;
-
     if (path.includes("dashboard")) {
       document.getElementById("dashboardLink").classList.add("active");
-    } 
-    else if (path.includes("habits")) {
+    } else if (path.includes("habits")) {
       document.getElementById("habitsLink").classList.add("active");
-    } 
-    else if (path.includes("profile")) {
+    } else if (path.includes("profile")) {
       document.getElementById("profileLink").classList.add("active");
     }
+
+    // Logout functionality
+    document.getElementById("logoutBtn").addEventListener("click", e => {
+      e.preventDefault();
+      localStorage.removeItem("access_token"); // clear JWT
+      window.location.href = "/auth/login";    // redirect to login
+    });
   </script>
 
 </body>

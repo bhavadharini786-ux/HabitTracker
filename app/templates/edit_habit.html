@@ -57,6 +57,13 @@
                       <input type="time" name="time" value="{{ habit.time }}" step="1" required>
                 </div>
 
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="completed" value="1" {% if habit.completed_today %}checked{% endif %}>
+                        Completed Today
+                    </label>
+                </div>
+
                 <div class="button-group">
                     <button type="submit" class="save-btn">Save Changes</button>
                     <a href="/habits" class="cancel-btn">Cancel</a>

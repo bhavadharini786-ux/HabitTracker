@@ -4,17 +4,32 @@
   <meta charset="UTF-8">
   <title>Habits</title>
   <style>
-    body{background:#0d1117;color:#e6edf3;font-family:Arial,sans-serif;}
-    .navbar{background:#161b22;padding:18px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #30363d;}
-    .logo{font-size:24px;font-weight:bold;color:#58a6ff;}
-    .nav-links a{text-decoration:none;color:white;margin-left:20px;font-weight:bold;}
-    .nav-links a:hover{color:#58a6ff;}
-    .container{max-width:800px;margin:auto;padding:30px;}
-    table{width:100%;border-collapse:collapse;margin-top:20px;}
-    th,td{border:1px solid #30363d;padding:10px;text-align:center;}
-    th{background:#161b22;color:#58a6ff;}
-    button{padding:5px 10px;margin:2px;}
-    input{padding:8px;margin:5px;}
+    body {background:#0d1117;color:#e6edf3;font-family:Arial,sans-serif;margin:0;}
+    .navbar {background:#161b22;padding:18px 30px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #30363d;}
+    .logo {font-size:24px;font-weight:bold;color:#58a6ff;}
+    .nav-links a {text-decoration:none;color:white;margin-left:20px;font-weight:bold;}
+    .nav-links a:hover {color:#58a6ff;}
+    .container {max-width:900px;margin:auto;padding:30px;}
+    h1 {margin-bottom:10px;}
+    table {width:100%;border-collapse:collapse;margin-top:20px;}
+    th, td {border:1px solid #30363d;padding:10px;text-align:center;}
+    th {background:#161b22;color:#58a6ff;}
+    button {padding:5px 10px;margin:2px;cursor:pointer;border:none;border-radius:4px;}
+    input {padding:8px;margin:5px;}
+    .habit-row.completed td:first-child {color:#10b981;font-weight:bold;}
+    .habit-row.completed td:nth-child(3) {background-color:#f0fff0;}
+    .habit-checkbox {cursor:pointer;transform:scale(1.2);}
+    .check-icon {margin-left:6px;color:#10b981;font-weight:bold;}
+    .drag-handle {cursor:grab;margin-right:8px;color:#58a6ff;font-weight:bold;}
+    .habit-row.dragging {opacity:0.5;background:#30363d;}
+    .suggestions-list {list-style:none;padding:0;margin-top:20px;}
+    .suggestions-list li {background:#161b22;margin:5px 0;padding:10px;border:1px solid #30363d;cursor:grab;}
+    .suggestions-list li.dragging {opacity:0.5;}
+    .badge {display:inline-block;padding:2px 8px;border-radius:12px;font-size:12px;font-weight:bold;margin-right:6px;}
+    .badge.health {background:#065f46;color:#d1fae5;}
+    .badge.fitness {background:#991b1b;color:#fee2e2;}
+    .badge.study {background:#3730a3;color:#e0e7ff;}
+    .badge.work {background:#92400e;color:#fef3c7;}
   </style>
 </head>
 <body>
@@ -28,15 +43,17 @@
     <a href="/logout">Logout</a>
   </div>
 </div>
+
 <div class="container">
   <h1>✅ My Habits</h1>
+  <p>Track and manage your daily habits</p>
 
   <!-- Habit Table -->
   <table>
     <thead>
       <tr>
         <th>Name</th>
-        <th>Time</th>
+        <th>Time / Info</th>
         <th>Status</th>
         <th>Actions</th>
       </tr>
@@ -50,38 +67,155 @@
     <input type="time" name="time" step="1" required>
     <button type="submit">Add Habit</button>
   </form>
+
+  <!-- Suggested Habits -->
+  <h2 style="margin-top:40px;">Suggested Habits</h2>
+  <p>Drag into table or double‑click to add</p>
+  <ul id="suggestedHabits" class="suggestions-list"></ul>
 </div>
 
 <script>
-async function loadHabits(){
-  const res = await fetch("/api/habits/today", {
-    headers: {"Authorization":"Bearer "+localStorage.getItem("access_token")}
-  });
-  const data = await res.json();
-  const table=document.getElementById("habitTable"); 
-  table.innerHTML="";
-  data.forEach(h=>{
-    table.innerHTML+=`<tr>
-      <td>${h.name}</td>
-      <td>${h.time || "-"}</td>
-      <td>${h.completed ? "✅" : "❌"}</td>
-      <td>
-        <button onclick="completeHabit('${h.id}')">Complete</button>
-        <button onclick="deleteHabit('${h.id}')">Delete</button>
-        <button onclick="window.location.href='/habit/edit/${h.id}'">Edit</button>
-      </td>
-    </tr>`;
+  const categoryMap = {
+    "Drink Water": "health",
+    "Exercise": "fitness",
+    "Meditation": "study",
+    "Read Book": "study",
+    "Walk 5000 Steps": "fitness",
+    "Healthy Diet": "health",
+    "Coding Practice": "work",
+    "Sleep Early": "health"
+  };
+
+  async function loadHabits() {
+    const res = await fetch("/api/habits/today", {
+      headers: { "Authorization": "Bearer " + localStorage.getItem("access_token") }
+    });
+    const data = await res.json();
+    const table = document.getElementById("habitTable");
+    table.innerHTML = "";
+
+    data.forEach(h => {
+      const category = categoryMap[h.name] || "work";
+      table.innerHTML += `
+        <tr class="habit-row ${h.completed ? 'completed' : ''}" draggable="true" data-id="${h.id}">
+          <td><span class="drag-handle">☰</span>
+              <span class="badge ${category}">${category.charAt(0).toUpperCase()+category.slice(1)}</span>
+              ${h.name}</td>
+          <td>${h.time || "-"}</td>
+          <td>
+            <input type="checkbox" class="habit-checkbox" data-id="${h.id}" ${h.completed ? "checked" : ""}>
+            ${h.completed ? '<span class="check-icon">✔️</span>' : ''}
+          </td>
+          <td>
+            <button onclick="deleteHabit('${h.id}')">Delete</button>
+            <button onclick="window.location.href='/habit/edit/${h.id}'">Edit</button>
+          </td>
+        </tr>`;
+    });
+    attachCheckboxListeners();
+    enableDragAndDrop();
+  }
+function attachCheckboxListeners() {
+  document.querySelectorAll('.habit-checkbox').forEach(cb => {
+    cb.addEventListener('change', async (e) => {
+      const habitId = e.target.dataset.id;
+      const completed = e.target.checked;
+      try {
+        const response = await fetch(`/api/habit/update/${habitId}`, {
+          method: "PUT",
+          headers: {
+            "Authorization": "Bearer " + localStorage.getItem("access_token"),
+            "Content-Type": "application/json"
+          }
+        });
+        if (!response.ok) {
+          e.target.checked = !completed; // revert if failed
+          alert("Update failed");
+        } else {
+          const result = await response.json();
+          const row = e.target.closest('.habit-row');
+          if (result.completed) {
+            row.classList.add("completed");
+          } else {
+            row.classList.remove("completed");
+          }
+        }
+      } catch (err) {
+        e.target.checked = !completed;
+        console.error(err);
+      }
+    });
   });
 }
 
-async function completeHabit(id){
-  await fetch("/api/habit/complete/"+id,{
-    method:"POST",
-    headers:{"Authorization":"Bearer "+localStorage.getItem("access_token")}
-  });
-  loadHabits();
+
+  function enableDragAndDrop() {
+    const rows = document.querySelectorAll("#habitTable .habit-row");
+    rows.forEach(row => {
+      row.addEventListener("dragstart", () => row.classList.add("dragging"));
+      row.addEventListener("dragend", () => {
+        row.classList.remove("dragging");
+        saveHabitOrder();
+      });
+    });
+
+    const tableBody = document.getElementById("habitTable");
+    tableBody.addEventListener("dragover", e => {
+      e.preventDefault();
+      const dragging = document.querySelector(".dragging");
+      const afterElement = getDragAfterElement(tableBody, e.clientY);
+      if (afterElement == null) tableBody.appendChild(dragging);
+      else tableBody.insertBefore(dragging, afterElement);
+    });
+
+    tableBody.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      const dragging = document.querySelector(".suggestions-list li.dragging");
+      if (dragging) {
+        const habitName = dragging.textContent.trim();
+        const now = new Date();
+        const isoTime = now.toTimeString().split(" ")[0]; // HH:MM:SS
+        await fetch("/api/habit/create", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + localStorage.getItem("access_token"),
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name: habitName, time: isoTime })
+        });
+        loadHabits();
+      }
+    });
+  }
+
+ function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll(".habit-row:not(.dragging)")];
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
+// Save order after drag
+function saveHabitOrder() {
+  const rows = document.querySelectorAll("#habitTable .habit-row");
+  const order = Array.from(rows).map(r => r.dataset.id);
+  fetch("/api/habits/reorder", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + localStorage.getItem("access_token")
+    },
+    body: JSON.stringify({ order })
+  });
+}
+
+// Delete habit
 async function deleteHabit(id){
   await fetch("/api/habit/delete/"+id,{
     method:"POST",
@@ -90,19 +224,63 @@ async function deleteHabit(id){
   loadHabits();
 }
 
-document.getElementById("habitForm").addEventListener("submit",async e=>{
+// Load suggestions with badges and real ISO time
+async function loadSuggestions(){
+  const suggestions = ["Drink Water","Exercise","Read Book","Meditation","Sleep Early"];
+  const list = document.getElementById("suggestedHabits");
+  list.innerHTML = "";
+
+  suggestions.forEach(name => {
+    const category = categoryMap[name] || "work";
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="badge ${category}">${category.charAt(0).toUpperCase()+category.slice(1)}</span> ${name}`;
+    li.draggable = true;
+
+    li.addEventListener("dragstart", () => li.classList.add("dragging"));
+    li.addEventListener("dragend", () => li.classList.remove("dragging"));
+
+    li.addEventListener("dblclick", async () => {
+      const now = new Date();
+      const isoTime = now.toTimeString().split(" ")[0]; // HH:MM:SS
+      await fetch("/api/habit/create", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + localStorage.getItem("access_token"),
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, time: isoTime })
+      });
+      loadHabits();
+    });
+
+    list.appendChild(li);
+  });
+}
+
+// Form submission with real ISO time
+document.getElementById("habitForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const form=new FormData(e.target);
-  await fetch("/api/habit/create",{
+  const form = new FormData(e.target);
+  const name = form.get("name");
+  const now = new Date();
+  const isoTime = now.toTimeString().split(" ")[0]; // HH:MM:SS
+  await fetch("/api/habit/create", {
     method:"POST",
-    headers:{"Authorization":"Bearer "+localStorage.getItem("access_token")},
-    body:form
+    headers: {
+      "Authorization": "Bearer " + localStorage.getItem("access_token"),
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name, time: isoTime })
   });
   e.target.reset();
   loadHabits();
 });
 
-loadHabits();
+// Load habits and suggestions on page load
+window.onload = () => {
+  loadHabits();
+  loadSuggestions();
+};
 </script>
 </body>
 </html>
